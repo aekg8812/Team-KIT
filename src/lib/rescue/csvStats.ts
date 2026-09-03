@@ -2,11 +2,16 @@ import type { CsvListingStatus, CsvSlot } from './types'
 
 export type CsvBreakdownRow = { label: string; count: number; recoveredTotal: number }
 
+// Rough, clearly-labeled estimate of food waste avoided per rescued guest — not a
+// precise measurement, just enough to turn "meals saved" into a tangible number.
+const FOOD_WASTE_KG_PER_GUEST = 0.35
+
 export type CsvStats = {
   reservedCount: number
   avgDiscountRate: number | null
   avgRecoveredPrice: number | null
-  byCategory: CsvBreakdownRow[]
+  mealsSaved: number
+  foodWasteKg: number
   byTimeBand: CsvBreakdownRow[]
 }
 
@@ -46,11 +51,15 @@ export function calcCsvStats(
       ? Math.round(reserved.reduce((sum, s) => sum + s.rescuePrice, 0) / reserved.length)
       : null
 
+  const mealsSaved = reserved.reduce((sum, s) => sum + s.guests, 0)
+  const foodWasteKg = Math.round(mealsSaved * FOOD_WASTE_KG_PER_GUEST * 10) / 10
+
   return {
     reservedCount: reserved.length,
     avgDiscountRate,
     avgRecoveredPrice,
-    byCategory: groupBy(reserved, (s) => s.category || 'その他'),
+    mealsSaved,
+    foodWasteKg,
     byTimeBand: groupBy(reserved, (s) => timeBand(s.time)),
   }
 }

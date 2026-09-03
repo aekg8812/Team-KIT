@@ -10,7 +10,7 @@ import { formatYen } from '@/lib/rescue/kpi'
 
 export default function StoreListPage() {
   const { csvSlots, csvListingStatus, publishCsvListing, addManualCancellation } = useRescue()
-  const [name, setName] = useState('')
+  const [course, setCourse] = useState('')
   const [price, setPrice] = useState('')
   const [time, setTime] = useState('')
   const [guests, setGuests] = useState('')
@@ -23,14 +23,14 @@ export default function StoreListPage() {
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     const originalPrice = Number(price)
-    if (!name.trim() || !Number.isFinite(originalPrice) || originalPrice <= 0) return
+    if (!Number.isFinite(originalPrice) || originalPrice <= 0) return
     addManualCancellation({
-      restaurantName: name.trim(),
       originalPrice,
+      category: course.trim() || undefined,
       time: time.trim() || undefined,
       guests: guests ? Number(guests) : undefined,
     })
-    setName('')
+    setCourse('')
     setPrice('')
     setTime('')
     setGuests('')
@@ -44,6 +44,7 @@ export default function StoreListPage() {
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">Fill Food — 飲食店向け</p>
               <h1 className="mt-1 text-2xl font-bold">出品する</h1>
+              <p className="mt-0.5 text-sm text-stone-500">鮨 佐賀</p>
               <p className="mt-1 text-sm text-stone-500">キャンセル待ちの予約をRESCUE枠として公開します</p>
             </div>
             <DemoRoleSwitch to="customer" />
@@ -51,9 +52,9 @@ export default function StoreListPage() {
 
           <form onSubmit={handleAdd} className="mt-6 rounded-2xl border border-stone-200 bg-white p-5">
             <p className="text-xs font-bold uppercase tracking-widest text-stone-400">キャンセル枠を追加</p>
-            <p className="mt-1 text-xs text-stone-400">店舗名と通常価格だけ入力すれば、RESCUE価格は自動で計算されます。あとで内容を確認してから出品できます。</p>
+            <p className="mt-1 text-xs text-stone-400">通常価格だけ入力すれば、RESCUE価格は自動で計算されます。あとで内容を確認してから出品できます。</p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="店舗名" required className="col-span-2 rounded-lg border border-stone-300 px-3 py-2 text-sm sm:col-span-1" />
+              <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="コース名 (任意)" className="col-span-2 rounded-lg border border-stone-300 px-3 py-2 text-sm sm:col-span-1" />
               <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min={1} placeholder="通常価格 (円)" required className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
               <input value={time} onChange={(e) => setTime(e.target.value)} placeholder="時間 (例 19:00)" className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
               <input value={guests} onChange={(e) => setGuests(e.target.value)} type="number" min={1} placeholder="人数" className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
@@ -78,7 +79,7 @@ export default function StoreListPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-red-500">⚠ キャンセル</p>
-                        <h2 className="mt-1 text-lg font-bold text-stone-900">{slot.restaurantName}</h2>
+                        <h2 className="mt-1 text-lg font-bold text-stone-900">{slot.category}</h2>
                         <p className="mt-1 text-xs text-stone-500">{slot.date} {slot.time} / {slot.guests}名</p>
                       </div>
                       <p className="shrink-0 text-2xl font-black text-red-600">-{formatYen(slot.originalPrice)}</p>
@@ -117,7 +118,7 @@ export default function StoreListPage() {
                 {listed.map((slot) => (
                   <article key={slot.id} className="rounded-xl border border-orange-200 bg-orange-50 p-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500">🔥 公開中</p>
-                    <h2 className="mt-1 font-bold">{slot.restaurantName}</h2>
+                    <h2 className="mt-1 font-bold">{slot.category}</h2>
                     <p className="mt-1 text-xs text-stone-500">{slot.date} {slot.time} / {slot.guests}名</p>
                     <p className="mt-2 text-lg font-bold text-orange-600">{formatYen(slot.rescuePrice)}</p>
                   </article>
@@ -133,7 +134,7 @@ export default function StoreListPage() {
                 {reserved.map((slot) => (
                   <article key={slot.id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">✓ 予約成立</p>
-                    <h2 className="mt-1 font-bold">{slot.restaurantName}</h2>
+                    <h2 className="mt-1 font-bold">{slot.category}</h2>
                     <p className="mt-2 text-lg font-bold text-emerald-700">{formatYen(slot.rescuePrice)}</p>
                   </article>
                 ))}

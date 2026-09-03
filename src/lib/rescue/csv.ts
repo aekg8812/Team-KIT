@@ -3,12 +3,16 @@ import { DEMO_SLOT } from './data'
 import type { CsvSlot } from './types'
 
 // Expected CSV header (UTF-8, comma-separated, quoted fields supported):
-// id,店舗名,ジャンル,説明,コメント,場所,日付,時間,人数,通常価格,残り分数,特典
+// id,コース,説明,コメント,日付,時間,人数,通常価格,残り分数,特典
 // - id: optional, auto-generated when blank
-// - 店舗名, 通常価格: required
+// - 通常価格: required — every other column is optional with a sensible default
+// - This is a single-restaurant platform: every row is a cancelled reservation at
+//   the one store running the demo, not a different restaurant, so there is no
+//   店舗名 column — the restaurant name always comes from DEMO_SLOT.
+// - コース: the menu/course name for this reservation (e.g. おまかせ握り)
 // - 特典: when set, the row becomes a perk offer (price kept, perk text shown) instead of a discount
 // - 残り分数: minutes until the slot, fed into the existing discount-rate rules when no 特典 is set
-const REQUIRED_HEADERS = ['店舗名', '通常価格']
+const REQUIRED_HEADERS = ['通常価格']
 
 function parseCsvRows(text: string): string[][] {
   const clean = text.replace(/^﻿/, '')
@@ -73,10 +77,9 @@ export function parseStoreCsv(text: string): { slots: CsvSlot[]; errors: string[
       return idx >= 0 ? (cells[idx] ?? '').trim() : ''
     }
 
-    const restaurantName = get('店舗名')
     const originalPriceRaw = get('通常価格')
-    if (!restaurantName || !originalPriceRaw) {
-      errors.push(`${i + 2}行目: 店舗名または通常価格が空です`)
+    if (!originalPriceRaw) {
+      errors.push(`${i + 2}行目: 通常価格が空です`)
       return
     }
 
@@ -97,8 +100,8 @@ export function parseStoreCsv(text: string): { slots: CsvSlot[]; errors: string[
 
     const base = {
       id,
-      restaurantName,
-      category: get('ジャンル'),
+      restaurantName: DEMO_SLOT.restaurantName,
+      category: get('コース') || 'おまかせコース',
       description: get('説明'),
       comment: get('コメント'),
       location: get('場所'),

@@ -2,12 +2,16 @@
 
 import { useRef, useState } from 'react'
 import { useRescue } from '@/context/RescueContext'
-import { DEMO_CSV_TEXT } from '@/lib/rescue/demoCsvData'
+
+// Served from /public — replace this file to change what "デモデータを使用" loads,
+// no code change needed.
+const DEMO_CSV_PATH = '/saga_restaurants_rescues_demo.csv'
 
 export default function CsvImportLink() {
   const { loadCsvSlots, queueDemoCancellations } = useRescue()
   const inputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [loadingDemo, setLoadingDemo] = useState(false)
 
   function flashMessage(text: string) {
     setMessage(text)
@@ -28,21 +32,35 @@ export default function CsvImportLink() {
       text = new TextDecoder('shift_jis').decode(buffer)
     }
     const result = loadCsvSlots(text)
-    flashMessage(
-      result.ok
-        ? `${result.count}件の店舗データを読み込みました`
-        : (result.error ?? '読み込みに失敗しました'),
-    )
-  }
-
-  function handleUseDemoData() {
-    const result = loadCsvSlots(DEMO_CSV_TEXT)
     if (!result.ok) {
-      flashMessage(result.error ?? 'デモデータの読み込みに失敗しました')
+      flashMessage(result.error ?? '読み込みに失敗しました')
       return
     }
     queueDemoCancellations(result.slots)
-    flashMessage(`${result.count}件のキャンセル待ちを投入しました`)
+    flashMessage(`${result.count}件のキャンセル待ちに投入しました`)
+  }
+
+  async function handleUseDemoData() {
+    setLoadingDemo(true)
+    try {
+      const res = await fetch(DEMO_CSV_PATH, { cache: 'no-store' })
+      if (!res.ok) {
+        flashMessage('デモデータファイルが見つかりませんでした')
+        return
+      }
+      const text = await res.text()
+      const result = loadCsvSlots(text)
+      if (!result.ok) {
+        flashMessage(result.error ?? 'デモデータの読み込みに失敗しました')
+        return
+      }
+      queueDemoCancellations(result.slots)
+      flashMessage(`${result.count}件のキャンセル待ちを投入しました`)
+    } catch {
+      flashMessage('デモデータの読み込みに失敗しました')
+    } finally {
+      setLoadingDemo(false)
+    }
   }
 
   return (
@@ -59,9 +77,10 @@ export default function CsvImportLink() {
         <button
           type="button"
           onClick={handleUseDemoData}
-          className="text-[10px] text-stone-300 hover:text-stone-400"
+          disabled={loadingDemo}
+          className="text-[10px] text-stone-300 hover:text-stone-400 disabled:opacity-50"
         >
-          デモデータを使用
+          {loadingDemo ? '読み込み中...' : 'デモデータを使用'}
         </button>
       </div>
       <input

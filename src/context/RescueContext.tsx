@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { calcKPIs } from "@/lib/rescue/kpi";
-import { getKpiBase } from "@/lib/rescue/data";
+import { getKpiBase, DEMO_SLOT } from "@/lib/rescue/data";
 import { parseStoreCsv } from "@/lib/rescue/csv";
 import { calcRescuePrice } from "@/lib/rescue/pricing";
 import type {
@@ -249,8 +249,8 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     const id = `manual-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const slot: CsvSlot = {
       id,
-      restaurantName: input.restaurantName,
-      category: input.category || "レストラン",
+      restaurantName: DEMO_SLOT.restaurantName,
+      category: input.category || "おまかせコース",
       description: "",
       comment: "",
       location: "",

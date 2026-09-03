@@ -40,7 +40,7 @@ export default function StoreDataPage() {
             <KpiCard labelJa="成功報酬売上" labelEn="Rescue Revenue" value={formatYen(kpi.rescueRevenue)} sentiment="gain" />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             <KpiCard
               labelJa="平均割引率"
               labelEn="Avg. Discount Rate"
@@ -55,6 +55,13 @@ export default function StoreDataPage() {
               subValue="RESCUE成立分（全体）"
               sentiment="gain"
             />
+            <KpiCard
+              labelJa="削減できた食品ロス"
+              labelEn="Food Waste Reduced"
+              value={stats.reservedCount > 0 ? `${stats.foodWasteKg}kg` : '—'}
+              subValue={stats.reservedCount > 0 ? `${stats.mealsSaved}食分（推定）` : 'RESCUE成立分から算出'}
+              sentiment="gain"
+            />
           </div>
 
           <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-5">
@@ -62,37 +69,20 @@ export default function StoreDataPage() {
             <MonthlyChart />
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-stone-200 bg-white p-5">
-              <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">ジャンル別の回収内訳</p>
-              {stats.byCategory.length === 0 ? (
-                <p className="mt-3 text-sm text-stone-400">まだRESCUE成立の実績がありません。</p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {stats.byCategory.map((row) => (
-                    <li key={row.label} className="flex items-center justify-between text-sm">
-                      <span className="text-stone-600">{row.label} <span className="text-xs text-stone-400">×{row.count}</span></span>
-                      <span className="font-bold tabular-nums text-stone-800">{formatYen(row.recoveredTotal)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-white p-5">
-              <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">時間帯別の回収内訳</p>
-              {stats.byTimeBand.length === 0 ? (
-                <p className="mt-3 text-sm text-stone-400">まだRESCUE成立の実績がありません。</p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {stats.byTimeBand.map((row) => (
-                    <li key={row.label} className="flex items-center justify-between text-sm">
-                      <span className="text-stone-600">{row.label} <span className="text-xs text-stone-400">×{row.count}</span></span>
-                      <span className="font-bold tabular-nums text-stone-800">{formatYen(row.recoveredTotal)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-5">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">時間帯別の回収内訳</p>
+            {stats.byTimeBand.length === 0 ? (
+              <p className="mt-3 text-sm text-stone-400">まだRESCUE成立の実績がありません。</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {stats.byTimeBand.map((row) => (
+                  <li key={row.label} className="flex items-center justify-between text-sm">
+                    <span className="text-stone-600">{row.label} <span className="text-xs text-stone-400">×{row.count}</span></span>
+                    <span className="font-bold tabular-nums text-stone-800">{formatYen(row.recoveredTotal)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <StoreNavigation />

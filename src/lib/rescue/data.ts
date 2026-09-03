@@ -33,43 +33,45 @@ export const DEMO_SLOT: RescueSlot = {
   minutesUntil: 52,
 }
 
-// Supplementary marketplace listings (static, not interactive in demo)
+// Supplementary marketplace listings (static, not interactive in demo).
+// Real Saga-area restaurants, used only for visual realism on the customer list —
+// pricing/timing here is fictional demo data, not anything the restaurants set.
 export const DUMMY_SLOTS: RescueSlot[] = [
   {
     id: 'slot-002',
-    restaurantName: '焼肉 匠',
+    restaurantName: '焼味処 輪久',
     category: '焼肉',
     date: '本日',
     time: '20:00',
     guests: 4,
-    originalPrice: 8000,
-    rescuePrice: 6800,
+    originalPrice: 12000,
+    rescuePrice: 10200,
     discountRate: 0.15,
-    minutesUntil: 112,
+    minutesUntil: 85,
   },
   {
     id: 'slot-003',
-    restaurantName: 'Bistro SAGA',
+    restaurantName: 'シャトー文雅',
     category: 'フレンチ',
     date: '本日',
     time: '19:30',
     guests: 2,
-    originalPrice: 6000,
-    rescuePrice: 5100,
+    originalPrice: 9000,
+    rescuePrice: 7650,
     discountRate: 0.15,
-    minutesUntil: 90,
+    minutesUntil: 100,
   },
   {
     id: 'slot-004',
-    restaurantName: '炭火焼 炎',
-    category: '炭火焼',
+    restaurantName: '旬喰い 右近',
+    category: '和食',
     date: '本日',
     time: '18:30',
     guests: 2,
-    originalPrice: 5000,
-    rescuePrice: 4250,
+    originalPrice: 8000,
+    rescuePrice: 6800,
     discountRate: 0.15,
-    minutesUntil: 75,
+    minutesUntil: 130,
   },
 ]
 

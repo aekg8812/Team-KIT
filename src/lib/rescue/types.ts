@@ -38,9 +38,10 @@ export type CsvSlot = RescueSlot & {
 export type CsvListingStatus = 'pending' | 'listed' | 'reserved'
 
 // Minimal input for the restaurant's manual "quick add" form — the rest of a
-// CsvSlot is auto-filled with sensible defaults and computed pricing.
+// CsvSlot is auto-filled with sensible defaults and computed pricing. There is
+// no restaurantName here: this is a single-restaurant platform, so every slot
+// (CSV-imported or manually added) belongs to the one store running the demo.
 export type ManualCancellationInput = {
-  restaurantName: string
   originalPrice: number
   category?: string
   time?: string
