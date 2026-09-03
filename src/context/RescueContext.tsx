@@ -29,7 +29,7 @@ const VALID_STATUSES: RescueStatus[] = [
 ];
 
 type RescueContextValue = {
-  hydrated: boolean;
+  hydrated: boolean; //正しい入力が行われたかの判定
   rescueStatus: RescueStatus;
   rescueOfferType: RescueOfferType;
   userRole: UserRole | null;
@@ -58,6 +58,9 @@ export function RescueProvider({ children }: { children: ReactNode }) {
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
   const [pendingHighlight, setPendingHighlight] = useState(false);
 
+  //コンポーネントがブラウザに一度表示されたときのみ実行する。
+  //エラー処理
+  //コンポーネントが最初に表示されたら、sessionStorageに保存されているRESCUEの状態・オファー種別・ユーザーロール・ハイライト状態を取得する。保存値が正しい値かチェックしながらReactのstateへ復元し、最後に「復元完了」を表すhydratedをtrueにする。コンポーネントが途中で破棄された場合は、予約していた描画処理をキャンセルする。
   useEffect(() => {
     const savedStatus = sessionStorage.getItem(SESSION_KEY);
     const savedOffer = sessionStorage.getItem(SESSION_KEY_OFFER);
@@ -125,8 +128,10 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     setPendingHighlight(false);
   }, []);
 
+  //callbackで一度読んでも、何度でも利用できる関数。
   const selectRole = useCallback((role: UserRole) => {
     //そのタブを開いている間だけデータを保存しておくブラウザの機能
+    //SESSION_KEY_ROLEは、キー。roleを参照するため
     sessionStorage.setItem(SESSION_KEY_ROLE, role);
     setUserRole(role);
   }, []);
