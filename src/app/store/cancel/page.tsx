@@ -1,60 +1,78 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useRescue } from '@/context/RescueContext'
-import { DEMO_SLOT } from '@/lib/rescue/data'
+import StepIndicator from '@/components/rescue/StepIndicator'
+import { DEMO_SLOT, PERK_DESCRIPTION } from '@/lib/rescue/data'
 import { formatYen } from '@/lib/rescue/kpi'
+import type { RescueOfferType } from '@/lib/rescue/types'
 
 export default function CancelPage() {
   const router = useRouter()
-  const { rescueStatus, startRescue } = useRescue()
+  const { rescueStatus, startRescue, setRescueOfferType } = useRescue()
+  const [selectedOffer, setSelectedOffer] = useState<RescueOfferType>('discount')
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [isPublished, setIsPublished] = useState(false)
 
-  // State guard: redirect to dashboard if cancellation hasn't been initiated.
-  // router.replace is not setState, so it doesn't trigger react-hooks/set-state-in-effect.
   useEffect(() => {
     if (rescueStatus !== 'cancelled') {
       router.replace('/store')
     }
   }, [rescueStatus, router])
 
-  function handleRescue() {
-    startRescue()
-    router.push('/marketplace')
-  }
-
   const slot = DEMO_SLOT
   const discountPct = Math.round(slot.discountRate * 100)
 
+  function handlePublish() {
+    setRescueOfferType(selectedOffer)
+    setIsPublishing(true)
+    setTimeout(() => {
+      setIsPublishing(false)
+      setIsPublished(true)
+      setTimeout(() => {
+        startRescue()
+        router.push('/marketplace')
+      }, 400)
+    }, 700)
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-stone-50">
       <div className="mx-auto max-w-2xl px-4 py-8">
 
-        {/* ─── Nav ─── */}
+        {/* Nav */}
         <Link
           href="/store"
-          className="mb-8 flex w-fit items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300"
+          className="mb-6 flex w-fit items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700"
         >
           ← ダッシュボードへ戻る
         </Link>
 
-        {/* ─── Store Header ─── */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white">{slot.restaurantName}</h1>
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
-              {slot.category}
-            </span>
-          </div>
+        <p className="mb-4 text-[10px] font-bold tracking-[0.25em] text-orange-500 uppercase">
+          Fill Food — 飲食店向け
+        </p>
+
+        {/* Step Indicator */}
+        <div className="mb-6 rounded-xl border border-stone-200 bg-white px-4 py-3">
+          <StepIndicator activeStep={0} />
         </div>
 
-        {/* ─── Reservation Info ─── */}
-        <div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-4">
-          <p className="mb-2 text-[10px] font-bold tracking-widest text-zinc-600 uppercase">
+        {/* Store header */}
+        <div className="mb-5">
+          <h1 className="text-2xl font-bold text-stone-900">{slot.restaurantName}</h1>
+          <span className="mt-1 inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500">
+            {slot.category}
+          </span>
+        </div>
+
+        {/* Reservation info */}
+        <div className="mb-4 rounded-xl border border-stone-200 bg-white px-5 py-4">
+          <p className="mb-2 text-[10px] font-bold tracking-widest text-stone-400 uppercase">
             キャンセルされた予約
           </p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-zinc-300">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-stone-600">
             <span>📅 {slot.date}</span>
             <span>🕖 {slot.time}</span>
             <span>👥 {slot.guests}名</span>
@@ -62,64 +80,130 @@ export default function CancelPage() {
           </div>
         </div>
 
-        {/* ─── LOSS DETECTED ─── */}
-        <div className="mb-4 rounded-2xl border border-red-900 bg-red-950/50 px-6 py-7 animate-[loss-pulse_2s_ease-in-out_3]">
-          <p className="mb-4 text-[10px] font-bold tracking-[0.3em] text-red-500 uppercase">
-            ⚠ Loss Detected
+        {/* LOSS card */}
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-6 py-6 animate-[loss-pulse_2s_ease-in-out_3]">
+          <p className="mb-3 text-[10px] font-bold tracking-[0.3em] text-red-500 uppercase">
+            ⚠ キャンセルが発生しました
           </p>
-          <p className="mb-2 text-sm text-red-400/70">予想損失</p>
-          <p className="text-6xl font-black tabular-nums text-red-400">
+          <p className="mb-1 text-sm text-red-400">予想損失</p>
+          <p className="text-5xl font-black tabular-nums text-red-600">
             -{formatYen(slot.originalPrice)}
           </p>
-          <p className="mt-3 text-xs text-red-900">
-            このままでは売上がゼロになります
-          </p>
+          <p className="mt-2 text-xs text-red-400">このままでは売上がゼロになります</p>
         </div>
 
-        {/* ─── SMART PRICING ─── */}
-        <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900 px-6 py-6">
-          <p className="mb-4 text-[10px] font-bold tracking-[0.3em] text-orange-400 uppercase">
-            Smart Pricing
-          </p>
+        {/* Rescue method selection */}
+        <p className="mb-3 text-sm font-bold text-stone-700">Rescue 方式を選択</p>
+        <div className="mb-5 grid grid-cols-2 gap-3">
 
-          <div className="mb-5 grid grid-cols-2 gap-y-3 text-sm">
-            <span className="text-zinc-500">予約まで</span>
-            <span className="font-medium text-white">{slot.minutesUntil}分</span>
-            <span className="text-zinc-500">推奨値引率</span>
-            <span className="font-medium text-orange-400">{discountPct}% OFF</span>
-          </div>
-
-          <div className="flex items-end gap-4 border-t border-zinc-800 pt-5">
-            <div>
-              <p className="mb-1 text-xs text-zinc-500">通常価格</p>
-              <p className="text-xl font-medium text-zinc-500 line-through tabular-nums">
-                {formatYen(slot.originalPrice)}
-              </p>
+          {/* Option A: Discount */}
+          <button
+            onClick={() => setSelectedOffer('discount')}
+            className={[
+              'rounded-xl border-2 p-4 text-left transition-all',
+              selectedOffer === 'discount'
+                ? 'border-orange-400 bg-orange-50'
+                : 'border-stone-200 bg-white hover:border-stone-300',
+            ].join(' ')}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-orange-500">おすすめ</span>
+              {selectedOffer === 'discount' && (
+                <span className="text-[10px] font-bold text-orange-500">✓</span>
+              )}
             </div>
-            <span className="pb-0.5 text-2xl text-zinc-600">→</span>
-            <div>
-              <p className="mb-1 text-xs text-orange-500">RESCUE PRICE</p>
-              <p className="text-4xl font-black tabular-nums text-orange-400">
-                {formatYen(slot.rescuePrice)}
-              </p>
+            <p className="text-sm font-bold text-stone-800">値下げして再販売</p>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-xs text-stone-400 line-through">{formatYen(slot.originalPrice)}</span>
+              <span className="text-lg font-black text-orange-500">{formatYen(slot.rescuePrice)}</span>
             </div>
-            <span className="mb-1 self-end rounded-full bg-orange-950 px-2.5 py-0.5 text-xs font-bold text-orange-400">
+            <span className="mt-1 inline-block rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">
               {discountPct}% OFF
             </span>
+          </button>
+
+          {/* Option B: Perk */}
+          <button
+            onClick={() => setSelectedOffer('perk')}
+            className={[
+              'rounded-xl border-2 p-4 text-left transition-all',
+              selectedOffer === 'perk'
+                ? 'border-orange-400 bg-orange-50'
+                : 'border-stone-200 bg-white hover:border-stone-300',
+            ].join(' ')}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-stone-400">価格維持</span>
+              {selectedOffer === 'perk' && (
+                <span className="text-[10px] font-bold text-orange-500">✓</span>
+              )}
+            </div>
+            <p className="text-sm font-bold text-stone-800">価格を維持して特典追加</p>
+            <div className="mt-2">
+              <span className="text-lg font-black text-stone-800">{formatYen(slot.originalPrice)}</span>
+            </div>
+            <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+              + {PERK_DESCRIPTION}
+            </span>
+          </button>
+
+        </div>
+
+        {/* Preview card */}
+        <div className="mb-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-400 uppercase">
+            利用者画面プレビュー
+          </p>
+          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+            <div className="bg-orange-500 px-4 py-1.5">
+              <span className="text-[10px] font-black tracking-[0.2em] text-white uppercase">
+                Just Cancelled
+              </span>
+            </div>
+            <div className="p-4">
+              <p className="font-bold text-stone-900">{slot.restaurantName}</p>
+              <p className="mt-0.5 text-xs text-stone-400">
+                {slot.date} {slot.time} / {slot.guests}名
+              </p>
+              <div className="mt-3">
+                {selectedOffer === 'discount' ? (
+                  <div className="flex items-end gap-2">
+                    <span className="text-sm text-stone-400 line-through">{formatYen(slot.originalPrice)}</span>
+                    <span className="text-2xl font-black text-orange-500">{formatYen(slot.rescuePrice)}</span>
+                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+                      {discountPct}% OFF
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-2xl font-black text-stone-800">{formatYen(slot.originalPrice)}</span>
+                    <div className="mt-1">
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+                        + {PERK_DESCRIPTION}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ─── RESCUE Button ─── */}
+        {/* Publish CTA */}
         <button
-          onClick={handleRescue}
-          disabled={rescueStatus !== 'cancelled'}
-          className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white transition-all hover:bg-orange-500 active:scale-[0.98] disabled:opacity-50"
+          onClick={handlePublish}
+          disabled={rescueStatus !== 'cancelled' || isPublishing || isPublished}
+          className="w-full rounded-2xl bg-orange-500 py-5 text-lg font-bold text-white transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-60"
         >
-          RESCUE 開始 — 今すぐ出品する
+          {isPublished
+            ? '掲載しました ✓'
+            : isPublishing
+            ? 'ユーザーへ配信中...'
+            : 'この内容でキャンセル枠を出品する'}
         </button>
 
-        <p className="mt-3 text-center text-xs text-zinc-700">
-          出品後、ユーザー向けマーケットプレイスに即時掲載されます
+        <p className="mt-3 text-center text-xs text-stone-400">
+          出品後、マーケットプレイスに即時掲載されます
         </p>
 
       </div>

@@ -1,4 +1,4 @@
-import type { KpiBase, KPI } from './types'
+import type { KpiBase, KPI, RescueOfferType, RescueSlot, RescueBreakdown } from './types'
 
 const RESCUE_FEE_RATE = 0.10
 
@@ -26,4 +26,11 @@ export function calcKPIs(base: KpiBase): KPI {
 
 export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString('ja-JP')}`
+}
+
+export function calcRescueBreakdown(offerType: RescueOfferType, slot: RescueSlot): RescueBreakdown {
+  const rescuePrice = offerType === 'perk' ? slot.originalPrice : slot.rescuePrice
+  const serviceFee = Math.round(rescuePrice * RESCUE_FEE_RATE)
+  const storeRevenue = rescuePrice - serviceFee
+  return { originalPrice: slot.originalPrice, rescuePrice, serviceFee, storeRevenue }
 }

@@ -9,13 +9,13 @@ import {
 } from 'react'
 import { calcKPIs } from '@/lib/rescue/kpi'
 import { KPI_BASES } from '@/lib/rescue/data'
-import type { RescueStatus, KPI } from '@/lib/rescue/types'
+import type { RescueStatus, RescueOfferType, KPI } from '@/lib/rescue/types'
 
 const SESSION_KEY = 'rescue_demo_status'
+const SESSION_KEY_OFFER = 'rescue_demo_offer'
 const VALID_STATUSES: RescueStatus[] = ['idle', 'cancelled', 'listed', 'reserved']
 
 // Reads from sessionStorage on client; returns 'idle' on server (SSR).
-// Pages use a router-based redirect (not a state guard) for hydration safety.
 function getInitialStatus(): RescueStatus {
   if (typeof window === 'undefined') return 'idle'
   const saved = sessionStorage.getItem(SESSION_KEY)
@@ -24,8 +24,15 @@ function getInitialStatus(): RescueStatus {
     : 'idle'
 }
 
+function getInitialOffer(): RescueOfferType {
+  if (typeof window === 'undefined') return 'discount'
+  const saved = sessionStorage.getItem(SESSION_KEY_OFFER)
+  return saved === 'perk' ? 'perk' : 'discount'
+}
+
 type RescueContextValue = {
   rescueStatus: RescueStatus
+  rescueOfferType: RescueOfferType
   kpi: KPI
   pendingHighlight: boolean
   consumeHighlight: () => void
@@ -33,12 +40,14 @@ type RescueContextValue = {
   startRescue: () => void
   completeReservation: () => void
   resetDemo: () => void
+  setRescueOfferType: (type: RescueOfferType) => void
 }
 
 const RescueContext = createContext<RescueContextValue | null>(null)
 
 export function RescueProvider({ children }: { children: ReactNode }) {
   const [rescueStatus, setRescueStatus] = useState<RescueStatus>(getInitialStatus)
+  const [rescueOfferType, setRescueOfferTypeRaw] = useState<RescueOfferType>(getInitialOffer)
   const [pendingHighlight, setPendingHighlight] = useState(false)
 
   const startCancel = useCallback(() => {
@@ -68,12 +77,19 @@ export function RescueProvider({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY)
+    sessionStorage.removeItem(SESSION_KEY_OFFER)
     setPendingHighlight(false)
+    setRescueOfferTypeRaw('discount')
     setRescueStatus('idle')
   }, [])
 
   const consumeHighlight = useCallback(() => {
     setPendingHighlight(false)
+  }, [])
+
+  const setRescueOfferType = useCallback((type: RescueOfferType) => {
+    sessionStorage.setItem(SESSION_KEY_OFFER, type)
+    setRescueOfferTypeRaw(type)
   }, [])
 
   const kpi = calcKPIs(KPI_BASES[rescueStatus])
@@ -82,6 +98,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     <RescueContext.Provider
       value={{
         rescueStatus,
+        rescueOfferType,
         kpi,
         pendingHighlight,
         consumeHighlight,
@@ -89,6 +106,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
         startRescue,
         completeReservation,
         resetDemo,
+        setRescueOfferType,
       }}
     >
       {children}

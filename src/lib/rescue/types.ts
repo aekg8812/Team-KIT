@@ -1,5 +1,14 @@
 export type RescueStatus = 'idle' | 'cancelled' | 'listed' | 'reserved'
 
+export type RescueOfferType = 'discount' | 'perk'
+
+export type RescueBreakdown = {
+  originalPrice: number
+  rescuePrice: number
+  serviceFee: number
+  storeRevenue: number
+}
+
 export type RescueSlot = {
   id: string
   restaurantName: string

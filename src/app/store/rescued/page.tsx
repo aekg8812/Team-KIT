@@ -1,116 +1,161 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRescue } from '@/context/RescueContext'
-import { RESCUE_BREAKDOWN } from '@/lib/rescue/data'
-import { formatYen } from '@/lib/rescue/kpi'
+import StepIndicator from '@/components/rescue/StepIndicator'
+import { DEMO_SLOT } from '@/lib/rescue/data'
+import { calcRescueBreakdown, formatYen } from '@/lib/rescue/kpi'
 
 export default function RescuedPage() {
   const router = useRouter()
-  const { rescueStatus } = useRescue()
+  const { rescueStatus, rescueOfferType } = useRescue()
+  const [displayAmount, setDisplayAmount] = useState(0)
+  const rafRef = useRef<number | null>(null)
+  const startTimeRef = useRef<number | null>(null)
 
-  // State guard: redirect to dashboard if reservation hasn't been completed.
   useEffect(() => {
     if (rescueStatus !== 'reserved') {
       router.replace('/store')
     }
   }, [rescueStatus, router])
 
-  const bd = RESCUE_BREAKDOWN
+  // Count-up: starts 1s after mount, runs for 1s with easeOutCubic.
+  // setDisplayAmount is called inside rAF callback — not synchronously in effect body.
+  useEffect(() => {
+    const storeRevenue = calcRescueBreakdown(rescueOfferType, DEMO_SLOT).storeRevenue
+    const DURATION = 1000
+
+    const delay = setTimeout(() => {
+      startTimeRef.current = null
+      function tick(timestamp: number) {
+        if (!startTimeRef.current) startTimeRef.current = timestamp
+        const elapsed = timestamp - startTimeRef.current
+        const progress = Math.min(elapsed / DURATION, 1)
+        const eased = 1 - Math.pow(1 - progress, 3)
+        setDisplayAmount(Math.round(storeRevenue * eased))
+        if (progress < 1) {
+          rafRef.current = requestAnimationFrame(tick)
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }, 1000)
+
+    return () => {
+      clearTimeout(delay)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [rescueOfferType])
+
+  const bd = calcRescueBreakdown(rescueOfferType, DEMO_SLOT)
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4 py-16 text-white">
-      <div className="w-full max-w-sm text-center">
+    <div className="min-h-screen bg-emerald-50">
+      <div className="mx-auto max-w-sm px-4 py-8">
 
-        {/* ─── RESCUED Title ─── */}
-        <div className="animate-[rescue-appear_0.65s_cubic-bezier(0.34,1.56,0.64,1)_forwards] opacity-0">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-4xl">
-              ✓
-            </div>
-          </div>
-          <h1 className="text-7xl font-black tracking-tight text-white">RESCUED</h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            キャンセル損失を売上に変換しました
-          </p>
+        {/* Step Indicator */}
+        <div className="mb-8 rounded-xl border border-emerald-200 bg-white px-4 py-3">
+          <StepIndicator activeStep={3} />
         </div>
 
-        {/* ─── Breakdown Card ─── */}
-        <div
-          className="mt-8 w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-6 opacity-0 animate-[rescue-fade-up_0.4s_ease-out_forwards]"
-          style={{ animationDelay: '0.7s' }}
-        >
-          <p className="mb-4 text-left text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-600">
-            回収サマリー
-          </p>
+        <div className="text-center">
 
-          {/* Row 1: Original loss */}
-          <div
-            className="flex items-center justify-between border-b border-zinc-800 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
-            style={{ animationDelay: '0.95s' }}
-          >
-            <span className="text-sm text-zinc-400">本来の損失</span>
-            <span className="text-lg font-bold tabular-nums text-red-400">
-              -{formatYen(bd.originalPrice)}
-            </span>
+          {/* Hero: checkmark + title */}
+          <div className="animate-[rescue-appear_0.65s_cubic-bezier(0.34,1.56,0.64,1)_forwards] opacity-0">
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-4xl text-white shadow-lg">
+                ✓
+              </div>
+            </div>
+            <h1 className="text-3xl font-black text-stone-900">売上を回収しました</h1>
+            <p className="mt-1 text-sm text-stone-500">キャンセル損失を売上に変換しました</p>
           </div>
 
-          {/* Row 2: Recovered revenue */}
+          {/* Count-up amount */}
           <div
-            className="flex items-center justify-between border-b border-zinc-800 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+            className="mt-6 opacity-0 animate-[rescue-fade-up_0.4s_ease-out_forwards]"
+            style={{ animationDelay: '0.7s' }}
+          >
+            <p className="text-[10px] font-bold tracking-widest text-stone-400 uppercase">
+              店舗の実質回収
+            </p>
+            <p className="mt-1 text-7xl font-black tabular-nums text-emerald-600">
+              +{formatYen(displayAmount)}
+            </p>
+          </div>
+
+          {/* Breakdown card */}
+          <div
+            className="mt-8 w-full rounded-2xl border border-stone-200 bg-white p-6 opacity-0 animate-[rescue-fade-up_0.4s_ease-out_forwards]"
             style={{ animationDelay: '1.3s' }}
           >
-            <span className="text-sm text-zinc-400">回収売上</span>
-            <span className="text-lg font-bold tabular-nums text-emerald-400">
-              +{formatYen(bd.rescuePrice)}
-            </span>
+            <p className="mb-4 text-left text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400">
+              回収サマリー
+            </p>
+
+            <div
+              className="flex items-center justify-between border-b border-stone-100 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+              style={{ animationDelay: '1.55s' }}
+            >
+              <span className="text-sm text-stone-500">本来の損失</span>
+              <span className="text-lg font-bold tabular-nums text-red-500">
+                -{formatYen(bd.originalPrice)}
+              </span>
+            </div>
+
+            <div
+              className="flex items-center justify-between border-b border-stone-100 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+              style={{ animationDelay: '1.85s' }}
+            >
+              <span className="text-sm text-stone-500">回収売上</span>
+              <span className="text-lg font-bold tabular-nums text-emerald-600">
+                +{formatYen(bd.rescuePrice)}
+              </span>
+            </div>
+
+            <div
+              className="flex items-center justify-between border-b border-stone-100 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+              style={{ animationDelay: '2.15s' }}
+            >
+              <span className="text-sm text-stone-500">Fill Food 手数料 (10%)</span>
+              <span className="text-lg font-bold tabular-nums text-stone-400">
+                -{formatYen(bd.serviceFee)}
+              </span>
+            </div>
+
+            <div
+              className="flex items-center justify-between pt-4 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+              style={{ animationDelay: '2.45s' }}
+            >
+              <span className="text-base font-semibold text-stone-800">店舗の実質回収</span>
+              <span className="text-3xl font-black tabular-nums text-emerald-600">
+                +{formatYen(bd.storeRevenue)}
+              </span>
+            </div>
           </div>
 
-          {/* Row 3: Service fee */}
+          {/* Service revenue note */}
           <div
-            className="flex items-center justify-between border-b border-zinc-800 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
-            style={{ animationDelay: '1.65s' }}
+            className="mt-4 rounded-xl border border-stone-200 bg-white px-4 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
+            style={{ animationDelay: '2.75s' }}
           >
-            <span className="text-sm text-zinc-400">サービス手数料 (10%)</span>
-            <span className="text-lg font-bold tabular-nums text-zinc-500">
-              -{formatYen(bd.serviceFee)}
-            </span>
+            <p className="text-xs text-stone-400">
+              Fill Food にも{' '}
+              <span className="font-bold text-orange-500">+{formatYen(bd.serviceFee)}</span>
+              {' '}の成功報酬が発生しました
+            </p>
           </div>
 
-          {/* Row 4: Net revenue — highlighted */}
-          <div
-            className="flex items-center justify-between pt-4 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
-            style={{ animationDelay: '2.0s' }}
+          {/* Return button */}
+          <button
+            onClick={() => router.push('/store')}
+            className="mt-8 w-full rounded-xl bg-orange-500 py-3.5 text-sm font-bold text-white opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards] transition-colors hover:bg-orange-600"
+            style={{ animationDelay: '3.0s' }}
           >
-            <span className="text-base font-semibold text-white">店舗の実質回収</span>
-            <span className="text-3xl font-black tabular-nums text-emerald-400">
-              +{formatYen(bd.storeRevenue)}
-            </span>
-          </div>
+            ダッシュボードで成果を見る →
+          </button>
+
         </div>
-
-        {/* ─── Service Revenue Note ─── */}
-        <div
-          className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
-          style={{ animationDelay: '2.3s' }}
-        >
-          <p className="text-xs text-zinc-500">
-            FILL FOOD の成功報酬{' '}
-            <span className="font-bold text-orange-400">+{formatYen(bd.serviceFee)}</span>
-            {' '}が発生しました
-          </p>
-        </div>
-
-        {/* ─── Return Button ─── */}
-        <button
-          onClick={() => router.push('/store')}
-          className="mt-8 w-full rounded-xl border border-zinc-700 bg-zinc-800 py-3.5 text-sm font-medium text-white opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards] transition-colors hover:bg-zinc-700"
-          style={{ animationDelay: '2.6s' }}
-        >
-          ダッシュボードへ戻る →
-        </button>
-
       </div>
     </div>
   )

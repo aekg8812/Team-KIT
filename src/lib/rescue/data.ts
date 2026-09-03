@@ -63,10 +63,19 @@ export const DUMMY_SLOTS: RescueSlot[] = [
   },
 ]
 
-// Fixed values for the rescued breakdown display
-export const RESCUE_BREAKDOWN = {
-  originalPrice: 10000,
-  rescuePrice: 8000,
-  serviceFee: 800,
-  storeRevenue: 7200,
-} as const
+// Monthly recovery GMV data for dashboard chart (static demo values)
+export const MONTHLY_RECOVERY = [
+  { month: '4月', value: 42000 },
+  { month: '5月', value: 51000 },
+  { month: '6月', value: 58000 },
+  { month: '7月', value: 63000 },
+  { month: '8月', value: 71000 },
+  { month: '9月', value: 76000 },
+]
+
+export const CUMULATIVE_RECOVERY_GMV = 1240000
+
+export const STORE_COMMENT =
+  '本日19時にキャンセルが出ました。仕込み済みのコースをぜひ楽しんでください。'
+
+export const PERK_DESCRIPTION = 'ドリンク1杯サービス'

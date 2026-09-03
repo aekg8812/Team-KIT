@@ -5,15 +5,26 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useRescue } from '@/context/RescueContext'
 import KpiCard from '@/components/rescue/KpiCard'
+import StepIndicator from '@/components/rescue/StepIndicator'
+import RecoveryGauge from '@/components/rescue/RecoveryGauge'
+import MonthlyChart from '@/components/rescue/MonthlyChart'
 import { formatYen } from '@/lib/rescue/kpi'
+import { CUMULATIVE_RECOVERY_GMV } from '@/lib/rescue/data'
+
+function getActiveStep(status: string): number {
+  switch (status) {
+    case 'cancelled': return 0
+    case 'listed':    return 1
+    case 'reserved':  return 3
+    default:          return -1
+  }
+}
 
 export default function StoreDashboardPage() {
   const router = useRouter()
   const { rescueStatus, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo } =
     useRescue()
 
-  // After reservation: show highlight animation for 2500ms then clear it.
-  // consumeHighlight is called inside a setTimeout callback (not synchronously in effect body).
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (!pendingHighlight) return
@@ -31,80 +42,110 @@ export default function StoreDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="min-h-screen bg-stone-50">
+      <div className="mx-auto max-w-4xl px-4 py-8">
 
-        {/* ─── Header ─── */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+        {/* Header */}
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <div className="mb-1 text-[10px] font-bold tracking-[0.25em] text-orange-400 uppercase">
-              FILL FOOD — RESCUE
-            </div>
-            <h1 className="text-2xl font-bold text-white">店舗ダッシュボード</h1>
-            <p className="mt-0.5 text-sm text-zinc-500">鮨 佐賀</p>
+            <p className="text-[10px] font-bold tracking-[0.25em] text-orange-500 uppercase">
+              Fill Food — 飲食店向け
+            </p>
+            <h1 className="mt-0.5 text-2xl font-bold text-stone-900">店舗ダッシュボード</h1>
+            <p className="mt-0.5 text-sm text-stone-500">鮨 佐賀</p>
           </div>
           <button
             onClick={resetDemo}
-            className="shrink-0 rounded border border-zinc-800 px-3 py-1.5 text-xs text-zinc-600 transition-colors hover:border-zinc-600 hover:text-zinc-400"
+            className="shrink-0 rounded border border-stone-200 px-3 py-1.5 text-xs text-stone-400 transition-colors hover:border-stone-300 hover:text-stone-600"
           >
             Reset Demo
           </button>
         </div>
 
-        {/* ─── Status Banner ─── */}
+        {/* Step Indicator */}
+        {rescueStatus !== 'idle' && (
+          <div className="mb-5 rounded-xl border border-stone-200 bg-white px-4 py-3">
+            <StepIndicator activeStep={getActiveStep(rescueStatus)} />
+          </div>
+        )}
+
+        {/* Status Banner */}
         {rescueStatus === 'cancelled' && (
-          <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-orange-900 bg-orange-950/40 px-4 py-3">
-            <span className="text-sm font-medium text-orange-400">
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <span className="text-sm font-medium text-red-600">
               ⚠ 本日 19:00 鮨 佐賀 のキャンセルが発生しました
             </span>
-            <Link href="/store/cancel" className="shrink-0 text-sm text-orange-400 hover:text-orange-300">
+            <Link
+              href="/store/cancel"
+              className="shrink-0 text-sm font-medium text-red-600 hover:text-red-700"
+            >
               詳細を見る →
             </Link>
           </div>
         )}
         {rescueStatus === 'listed' && (
-          <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-sky-900 bg-sky-950/40 px-4 py-3">
-            <span className="text-sm font-medium text-sky-400">
-              🚀 RESCUE 出品中 — ユーザーの予約受付中
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+            <span className="text-sm font-medium text-orange-600">
+              🔥 RESCUE 出品中 — ユーザーの予約受付中
             </span>
-            <Link href="/marketplace" className="shrink-0 text-sm text-sky-400 hover:text-sky-300">
+            <Link
+              href="/marketplace"
+              className="shrink-0 text-sm font-medium text-orange-600 hover:text-orange-700"
+            >
               マーケットを見る →
             </Link>
           </div>
         )}
         {rescueStatus === 'reserved' && (
-          <div className="mb-6 rounded-xl border border-emerald-900 bg-emerald-950/40 px-4 py-3">
-            <span className="text-sm font-medium text-emerald-400">
-              ✓ 予約成立 — {formatYen(8000)} の売上を回収しました
+          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <span className="text-sm font-medium text-emerald-700">
+              ✓ 予約が成立しました — 売上を回収しました
             </span>
           </div>
         )}
 
-        {/* ─── KPI Grid — Top 3 ─── */}
-        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard
-            labelJa="今月のキャンセル損失"
-            labelEn="Cancellation GMV"
-            value={formatYen(kpi.cancellationGMV)}
-            sentiment="loss"
-          />
-          <KpiCard
-            labelJa="回収できた売上"
-            labelEn="Recovered GMV"
-            value={formatYen(kpi.recoveredGMV)}
-            sentiment="gain"
-            highlighted={pendingHighlight}
-          />
-          <KpiCard
-            labelJa="回収率"
-            labelEn="Recovery Rate"
-            value={`${kpi.recoveryRate}%`}
-            sentiment="gain"
-          />
+        {/* Hero KPI */}
+        <div
+          className={[
+            'mb-4 rounded-2xl border p-8',
+            pendingHighlight
+              ? 'border-emerald-400 bg-emerald-50 animate-[kpi-highlight_2.5s_ease-out_forwards]'
+              : 'border-stone-200 bg-white',
+          ].join(' ')}
+        >
+          <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">
+            今月救った売上
+          </p>
+          <p className="text-[10px] text-stone-400 mt-0.5">Recovered GMV</p>
+          <p className="mt-3 text-6xl font-black tabular-nums text-emerald-600">
+            {formatYen(kpi.recoveredGMV)}
+          </p>
+          <p className="mt-2 text-sm text-stone-400">
+            今月のキャンセル損失{' '}
+            <span className="font-bold text-red-500">{formatYen(kpi.cancellationGMV)}</span>{' '}
+            のうち
+          </p>
         </div>
 
-        {/* ─── KPI Grid — Bottom 2 ─── */}
-        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-2xl">
+        {/* Recovery Rate + Cumulative */}
+        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-stone-200 bg-white p-5">
+            <RecoveryGauge rate={kpi.recoveryRate} />
+          </div>
+          <div className="rounded-2xl border border-stone-200 bg-white p-5">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">
+              累計救出売上
+            </p>
+            <p className="text-[10px] text-stone-400 mt-0.5">Cumulative Recovered</p>
+            <p className="mt-3 text-3xl font-bold tabular-nums text-stone-800">
+              {formatYen(CUMULATIVE_RECOVERY_GMV)}
+            </p>
+            <p className="mt-1 text-xs text-stone-400">サービス開始来</p>
+          </div>
+        </div>
+
+        {/* Support KPIs */}
+        <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <KpiCard
             labelJa="成約率"
             labelEn="Fill Rate"
@@ -113,40 +154,53 @@ export default function StoreDashboardPage() {
             sentiment="neutral"
           />
           <KpiCard
+            labelJa="救出した予約"
+            labelEn="Filled Count"
+            value={`${kpi.filledCount}件`}
+            sentiment="gain"
+          />
+          <KpiCard
             labelJa="成功報酬売上"
             labelEn="Rescue Revenue"
             value={formatYen(kpi.rescueRevenue)}
             sentiment="gain"
-            highlighted={pendingHighlight}
           />
         </div>
 
-        {/* ─── Action Area ─── */}
+        {/* Monthly Chart */}
+        <div className="mb-8 rounded-2xl border border-stone-200 bg-white p-5">
+          <p className="mb-4 text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">
+            月別の回収売上
+          </p>
+          <MonthlyChart />
+        </div>
+
+        {/* Action Area */}
         {rescueStatus === 'idle' && (
           <div className="mx-auto max-w-xl">
             <button
               onClick={handleSimulate}
-              className="group w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-left transition-all hover:border-orange-800 hover:bg-zinc-800"
+              className="group w-full rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50 p-6 text-left transition-all hover:border-orange-400 hover:bg-orange-100"
             >
               <div className="mb-2 flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-950 text-orange-400 text-sm">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-lg text-orange-500">
                   ⚡
                 </span>
-                <span className="font-semibold text-white group-hover:text-orange-300">
-                  キャンセル発生をシミュレート
+                <span className="font-bold text-stone-800 group-hover:text-orange-700">
+                  キャンセルをシミュレートする
                 </span>
               </div>
-              <p className="pl-11 text-sm text-zinc-600">
-                このボタンでデモを開始します ― 損失発生 → RESCUE → 売上回収
+              <p className="pl-12 text-sm text-stone-500">
+                このボタンでデモを開始 ― 損失発生 → RESCUE → 売上回収
               </p>
             </button>
           </div>
         )}
 
-        {/* ─── Business Model Footer ─── */}
-        <div className="mt-16 border-t border-zinc-800 pt-6">
-          <p className="text-center text-xs text-zinc-700">
-            成功報酬型 ― 売上が回収できた時だけ 10% の手数料 / 初期費用 ¥0 / 月額固定費 ¥0
+        {/* Footer */}
+        <div className="mt-12 border-t border-stone-200 pt-6">
+          <p className="text-center text-xs text-stone-400">
+            成功報酬型 ― 売上が回収できた時だけ 10% / 初期費用 ¥0 / 月額固定費 ¥0
           </p>
         </div>
 

@@ -17,11 +17,11 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Used on KPI cards after reservation completes */
+/* Used on KPI cards after reservation completes — terminates at light-theme values */
 @keyframes kpi-highlight {
-  0%   { border-color: rgb(52 211 153);      background-color: rgb(52 211 153 / 0.10); }
+  0%   { border-color: rgb(52 211 153);       background-color: rgb(52 211 153 / 0.12); }
   60%  { border-color: rgb(52 211 153 / 0.4); background-color: rgb(52 211 153 / 0.04); }
-  100% { border-color: rgb(39 39 42);         background-color: rgb(24 24 27); }
+  100% { border-color: rgb(231 229 228);      background-color: rgb(255 255 255); }
 }
 
 /* Used on LOSS DETECTED alert: soft pulse on the red border */
