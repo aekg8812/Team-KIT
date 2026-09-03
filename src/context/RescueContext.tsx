@@ -126,6 +126,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const selectRole = useCallback((role: UserRole) => {
+    //そのタブを開いている間だけデータを保存しておくブラウザの機能
     sessionStorage.setItem(SESSION_KEY_ROLE, role);
     setUserRole(role);
   }, []);
@@ -176,7 +177,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
 export function useRescue(): RescueContextValue {
   const context = useContext(RescueContext);
   if (!context) {
-    throw new Error('useRescue must be used within RescueProvider');
+    throw new Error("useRescue must be used within RescueProvider");
   }
   return context;
 }
