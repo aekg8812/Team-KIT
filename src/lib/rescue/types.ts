@@ -24,6 +24,30 @@ export type RescueSlot = {
   minutesUntil: number
 }
 
+// A RescueSlot loaded from a store CSV import, with extra fields needed for the detail page.
+export type CsvSlot = RescueSlot & {
+  description: string
+  comment: string
+  location: string
+  offerType: RescueOfferType
+  perkDescription: string
+}
+
+// Per-CsvSlot publication state, independent of the DEMO_SLOT state machine so
+// multiple CSV-sourced listings can be pending/listed/reserved at the same time.
+export type CsvListingStatus = 'pending' | 'listed' | 'reserved'
+
+// Minimal input for the restaurant's manual "quick add" form — the rest of a
+// CsvSlot is auto-filled with sensible defaults and computed pricing.
+export type ManualCancellationInput = {
+  restaurantName: string
+  originalPrice: number
+  category?: string
+  time?: string
+  guests?: number
+  minutesUntil?: number
+}
+
 export type KpiBase = {
   cancellationGMV: number
   recoveredGMV: number

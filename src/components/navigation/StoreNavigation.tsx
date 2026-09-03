@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 
 const ITEMS = [
   { label: 'ホーム', href: '/store' },
-  { label: '出品', href: '/store/cancel' },
-  { label: 'データ', href: '/store#data' },
+  { label: '出品', href: '/store/list' },
+  { label: 'データ', href: '/store/data' },
 ]
 
 export default function StoreNavigation() {
@@ -17,7 +17,7 @@ export default function StoreNavigation() {
         {ITEMS.map((item) => {
           const active = item.href === '/store'
             ? pathname === '/store'
-            : pathname.startsWith('/store/cancel') && item.href === '/store/cancel'
+            : pathname.startsWith(item.href)
           return <Link key={item.label} href={item.href} className={`rounded-lg px-5 py-2 text-xs font-bold ${active ? 'bg-orange-50 text-orange-600' : 'text-stone-400'}`}>{item.label}</Link>
         })}
       </div>

@@ -10,17 +10,24 @@ import {
 } from "react";
 import { calcKPIs } from "@/lib/rescue/kpi";
 import { getKpiBase } from "@/lib/rescue/data";
+import { parseStoreCsv } from "@/lib/rescue/csv";
+import { calcRescuePrice } from "@/lib/rescue/pricing";
 import type {
   RescueStatus,
   RescueOfferType,
   KPI,
   UserRole,
+  CsvSlot,
+  CsvListingStatus,
+  ManualCancellationInput,
 } from "@/lib/rescue/types";
 
 const SESSION_KEY = "rescue_demo_status";
 const SESSION_KEY_OFFER = "rescue_demo_offer";
 const SESSION_KEY_ROLE = "rescue_demo_role";
 const SESSION_KEY_HIGHLIGHT = "rescue_demo_highlight_pending";
+const SESSION_KEY_CSV = "rescue_demo_csv_slots";
+const SESSION_KEY_CSV_STATUS = "rescue_demo_csv_listing_status";
 const VALID_STATUSES: RescueStatus[] = [
   "idle",
   "cancelled",
@@ -45,6 +52,17 @@ type RescueContextValue = {
   beginRoleSwitch: (role: UserRole) => void;
   finishRoleSwitch: () => void;
   setRescueOfferType: (type: RescueOfferType) => void;
+  csvSlots: CsvSlot[];
+  loadCsvSlots: (
+    csvText: string,
+  ) =>
+    | { ok: true; count: number; slots: CsvSlot[] }
+    | { ok: false; count: 0; error: string };
+  csvListingStatus: Record<string, CsvListingStatus>;
+  queueDemoCancellations: (slots: CsvSlot[]) => void;
+  publishCsvListing: (id: string) => void;
+  reserveCsvListing: (id: string) => void;
+  addManualCancellation: (input: ManualCancellationInput) => void;
 };
 
 const RescueContext = createContext<RescueContextValue | null>(null);
@@ -57,11 +75,17 @@ export function RescueProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
   const [pendingHighlight, setPendingHighlight] = useState(false);
+  const [csvSlots, setCsvSlots] = useState<CsvSlot[]>([]);
+  const [csvListingStatus, setCsvListingStatus] = useState<
+    Record<string, CsvListingStatus>
+  >({});
 
   useEffect(() => {
     const savedStatus = sessionStorage.getItem(SESSION_KEY);
     const savedOffer = sessionStorage.getItem(SESSION_KEY_OFFER);
     const savedRole = sessionStorage.getItem(SESSION_KEY_ROLE);
+    const savedCsv = sessionStorage.getItem(SESSION_KEY_CSV);
+    const savedCsvStatus = sessionStorage.getItem(SESSION_KEY_CSV_STATUS);
     const frame = requestAnimationFrame(() => {
       setRescueStatus(
         savedStatus && VALID_STATUSES.includes(savedStatus as RescueStatus)
@@ -77,6 +101,20 @@ export function RescueProvider({ children }: { children: ReactNode }) {
       setPendingHighlight(
         sessionStorage.getItem(SESSION_KEY_HIGHLIGHT) === "true",
       );
+      if (savedCsv) {
+        try {
+          setCsvSlots(JSON.parse(savedCsv));
+        } catch {
+          sessionStorage.removeItem(SESSION_KEY_CSV);
+        }
+      }
+      if (savedCsvStatus) {
+        try {
+          setCsvListingStatus(JSON.parse(savedCsvStatus));
+        } catch {
+          sessionStorage.removeItem(SESSION_KEY_CSV_STATUS);
+        }
+      }
       setHydrated(true);
     });
     return () => cancelAnimationFrame(frame);
@@ -113,11 +151,15 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(SESSION_KEY_OFFER);
     sessionStorage.removeItem(SESSION_KEY_ROLE);
     sessionStorage.removeItem(SESSION_KEY_HIGHLIGHT);
+    sessionStorage.removeItem(SESSION_KEY_CSV);
+    sessionStorage.removeItem(SESSION_KEY_CSV_STATUS);
     setPendingHighlight(false);
     setRescueOfferTypeRaw("discount");
     setUserRole(null);
     setIsRoleSwitching(false);
     setRescueStatus("idle");
+    setCsvSlots([]);
+    setCsvListingStatus({});
   }, []);
 
   const consumeHighlight = useCallback(() => {
@@ -145,6 +187,95 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     setRescueOfferTypeRaw(type);
   }, []);
 
+  const loadCsvSlots = useCallback((csvText: string) => {
+    const { slots, errors } = parseStoreCsv(csvText);
+    if (slots.length === 0) {
+      return {
+        ok: false as const,
+        count: 0 as const,
+        error: errors[0] ?? "有効なデータが見つかりませんでした",
+      };
+    }
+    sessionStorage.setItem(SESSION_KEY_CSV, JSON.stringify(slots));
+    sessionStorage.removeItem(SESSION_KEY_CSV_STATUS);
+    setCsvSlots(slots);
+    setCsvListingStatus({});
+    return { ok: true as const, count: slots.length, slots };
+  }, []);
+
+  // Takes an explicit slot list (rather than reading csvSlots state) so a caller that
+  // just called loadCsvSlots() in the same handler queues the fresh slots, not a stale
+  // pre-update closure value.
+  const queueDemoCancellations = useCallback((slots: CsvSlot[]) => {
+    setCsvListingStatus((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const slot of slots) {
+        if (!next[slot.id]) {
+          next[slot.id] = "pending";
+          changed = true;
+        }
+      }
+      if (!changed) return prev;
+      sessionStorage.setItem(SESSION_KEY_CSV_STATUS, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const publishCsvListing = useCallback((id: string) => {
+    setCsvListingStatus((prev) => {
+      if (prev[id] !== "pending") return prev;
+      const next = { ...prev, [id]: "listed" as CsvListingStatus };
+      sessionStorage.setItem(SESSION_KEY_CSV_STATUS, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const reserveCsvListing = useCallback((id: string) => {
+    setCsvListingStatus((prev) => {
+      if (prev[id] !== "listed") return prev;
+      const next = { ...prev, [id]: "reserved" as CsvListingStatus };
+      sessionStorage.setItem(SESSION_KEY_CSV_STATUS, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  // Restaurant's manual "quick add" form: only name + price are required, everything
+  // else defaults, and pricing is auto-computed — the result still lands as a normal
+  // pending card the restaurant must review and click 出品する on before it's public.
+  const addManualCancellation = useCallback((input: ManualCancellationInput) => {
+    const minutesUntil = input.minutesUntil ?? 60;
+    const { rescuePrice, discountRate } = calcRescuePrice(input.originalPrice, minutesUntil);
+    const id = `manual-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const slot: CsvSlot = {
+      id,
+      restaurantName: input.restaurantName,
+      category: input.category || "レストラン",
+      description: "",
+      comment: "",
+      location: "",
+      date: "本日",
+      time: input.time || "19:00",
+      guests: input.guests ?? 2,
+      originalPrice: input.originalPrice,
+      rescuePrice,
+      discountRate,
+      minutesUntil,
+      offerType: "discount",
+      perkDescription: "",
+    };
+    setCsvSlots((prev) => {
+      const next = [...prev, slot];
+      sessionStorage.setItem(SESSION_KEY_CSV, JSON.stringify(next));
+      return next;
+    });
+    setCsvListingStatus((prev) => {
+      const next = { ...prev, [id]: "pending" as CsvListingStatus };
+      sessionStorage.setItem(SESSION_KEY_CSV_STATUS, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const kpi = calcKPIs(getKpiBase(rescueStatus, rescueOfferType));
 
   return (
@@ -166,6 +297,13 @@ export function RescueProvider({ children }: { children: ReactNode }) {
         beginRoleSwitch,
         finishRoleSwitch,
         setRescueOfferType,
+        csvSlots,
+        loadCsvSlots,
+        csvListingStatus,
+        queueDemoCancellations,
+        publishCsvListing,
+        reserveCsvListing,
+        addManualCancellation,
       }}
     >
       {children}

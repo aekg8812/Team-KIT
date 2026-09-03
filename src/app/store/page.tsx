@@ -4,15 +4,13 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useRescue } from '@/context/RescueContext'
-import KpiCard from '@/components/rescue/KpiCard'
 import StepIndicator from '@/components/rescue/StepIndicator'
 import RecoveryGauge from '@/components/rescue/RecoveryGauge'
-import MonthlyChart from '@/components/rescue/MonthlyChart'
 import RoleGate from '@/components/navigation/RoleGate'
 import StoreNavigation from '@/components/navigation/StoreNavigation'
 import DemoRoleSwitch from '@/components/navigation/DemoRoleSwitch'
 import { formatYen } from '@/lib/rescue/kpi'
-import { CUMULATIVE_RECOVERY_GMV, DEMO_SLOT, PERK_DESCRIPTION } from '@/lib/rescue/data'
+import { DEMO_SLOT, PERK_DESCRIPTION } from '@/lib/rescue/data'
 
 function getActiveStep(status: string): number {
   switch (status) {
@@ -25,8 +23,9 @@ function getActiveStep(status: string): number {
 
 export default function StoreDashboardPage() {
   const router = useRouter()
-  const { rescueStatus, rescueOfferType, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo } =
+  const { rescueStatus, rescueOfferType, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo, csvSlots, csvListingStatus } =
     useRescue()
+  const pendingCsvCount = csvSlots.filter((s) => csvListingStatus[s.id] === 'pending').length
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
@@ -113,6 +112,16 @@ export default function StoreDashboardPage() {
             </span>
           </div>
         )}
+        {pendingCsvCount > 0 && (
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <span className="text-sm font-medium text-red-600">
+              ⚠ {pendingCsvCount}件のキャンセル待ちがあります
+            </span>
+            <Link href="/store/list" className="shrink-0 text-sm font-medium text-red-600 hover:text-red-700">
+              出品する →
+            </Link>
+          </div>
+        )}
 
         {/* Hero KPI */}
         <div
@@ -137,52 +146,10 @@ export default function StoreDashboardPage() {
           </p>
         </div>
 
-        {/* Recovery Rate + Cumulative */}
-        <div id="data" className="mb-4 grid scroll-mt-6 grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-stone-200 bg-white p-5">
-            <RecoveryGauge rate={kpi.recoveryRate} />
-          </div>
-          <div className="rounded-2xl border border-stone-200 bg-white p-5">
-            <p className="text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">
-              累計救出売上
-            </p>
-            <p className="text-[10px] text-stone-400 mt-0.5">Cumulative Recovered</p>
-            <p className="mt-3 text-3xl font-bold tabular-nums text-stone-800">
-              {formatYen(CUMULATIVE_RECOVERY_GMV)}
-            </p>
-            <p className="mt-1 text-xs text-stone-400">サービス開始来</p>
-          </div>
-        </div>
-
-        {/* Support KPIs */}
-        <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <KpiCard
-            labelJa="成約率"
-            labelEn="Fill Rate"
-            value={`${kpi.fillRate}%`}
-            subValue={`${kpi.filledCount} / ${kpi.totalListed} 枠`}
-            sentiment="neutral"
-          />
-          <KpiCard
-            labelJa="救出した予約"
-            labelEn="Filled Count"
-            value={`${kpi.filledCount}件`}
-            sentiment="gain"
-          />
-          <KpiCard
-            labelJa="成功報酬売上"
-            labelEn="Rescue Revenue"
-            value={formatYen(kpi.rescueRevenue)}
-            sentiment="gain"
-          />
-        </div>
-
-        {/* Monthly Chart */}
+        {/* Recovery Rate */}
         <div className="mb-8 rounded-2xl border border-stone-200 bg-white p-5">
-          <p className="mb-4 text-[10px] font-bold tracking-[0.25em] text-stone-400 uppercase">
-            月別の回収売上
-          </p>
-          <MonthlyChart />
+          <RecoveryGauge rate={kpi.recoveryRate} />
+          <Link href="/store/data" className="mt-4 inline-block text-sm font-bold text-orange-600">詳しく見る →</Link>
         </div>
 
         {/* Action Area */}
