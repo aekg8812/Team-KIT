@@ -4,21 +4,22 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRescue } from '@/context/RescueContext'
 import StepIndicator from '@/components/rescue/StepIndicator'
+import RoleGate from '@/components/navigation/RoleGate'
 import { DEMO_SLOT } from '@/lib/rescue/data'
 import { calcRescueBreakdown, formatYen } from '@/lib/rescue/kpi'
 
 export default function RescuedPage() {
   const router = useRouter()
-  const { rescueStatus, rescueOfferType } = useRescue()
+  const { hydrated, rescueStatus, rescueOfferType } = useRescue()
   const [displayAmount, setDisplayAmount] = useState(0)
   const rafRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (rescueStatus !== 'reserved') {
+    if (hydrated && rescueStatus !== 'reserved') {
       router.replace('/store')
     }
-  }, [rescueStatus, router])
+  }, [hydrated, rescueStatus, router])
 
   // Count-up: starts 1s after mount, runs for 1s with easeOutCubic.
   // setDisplayAmount is called inside rAF callback — not synchronously in effect body.
@@ -50,6 +51,7 @@ export default function RescuedPage() {
   const bd = calcRescueBreakdown(rescueOfferType, DEMO_SLOT)
 
   return (
+    <RoleGate role="restaurant">
     <div className="min-h-screen bg-emerald-50">
       <div className="mx-auto max-w-sm px-4 py-8">
 
@@ -158,5 +160,6 @@ export default function RescuedPage() {
         </div>
       </div>
     </div>
+    </RoleGate>
   )
 }

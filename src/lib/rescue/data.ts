@@ -1,4 +1,4 @@
-import type { KpiBase, RescueStatus, RescueSlot } from './types'
+import type { KpiBase, RescueOfferType, RescueStatus, RescueSlot } from './types'
 
 // KPI base values for each demo state.
 // Derived values (recoveryRate, fillRate, rescueRevenue) are computed by calcKPIs().
@@ -7,6 +7,16 @@ export const KPI_BASES: Record<RescueStatus, KpiBase> = {
   cancelled: { cancellationGMV: 126000, recoveredGMV: 76000, filledCount: 6, totalListed: 8 },
   listed:    { cancellationGMV: 126000, recoveredGMV: 76000, filledCount: 6, totalListed: 9 },
   reserved:  { cancellationGMV: 126000, recoveredGMV: 84000, filledCount: 7, totalListed: 9 },
+}
+
+export function getKpiBase(
+  status: RescueStatus,
+  offerType: RescueOfferType,
+): KpiBase {
+  if (status === 'reserved' && offerType === 'perk') {
+    return { ...KPI_BASES.reserved, recoveredGMV: 86000 }
+  }
+  return KPI_BASES[status]
 }
 
 // Main demo slot: 鮨 佐賀
@@ -77,5 +87,8 @@ export const CUMULATIVE_RECOVERY_GMV = 1240000
 
 export const STORE_COMMENT =
   '本日19時にキャンセルが出ました。仕込み済みのコースをぜひ楽しんでください。'
+
+export const STORE_DESCRIPTION =
+  '旬の魚と佐賀の地酒を、落ち着いたカウンターで楽しめる予約制の鮨店です。'
 
 export const PERK_DESCRIPTION = 'ドリンク1杯サービス'

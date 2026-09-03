@@ -2,6 +2,8 @@ export type RescueStatus = 'idle' | 'cancelled' | 'listed' | 'reserved'
 
 export type RescueOfferType = 'discount' | 'perk'
 
+export type UserRole = 'customer' | 'restaurant'
+
 export type RescueBreakdown = {
   originalPrice: number
   rescuePrice: number

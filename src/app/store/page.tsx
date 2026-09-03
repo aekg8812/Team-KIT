@@ -8,8 +8,11 @@ import KpiCard from '@/components/rescue/KpiCard'
 import StepIndicator from '@/components/rescue/StepIndicator'
 import RecoveryGauge from '@/components/rescue/RecoveryGauge'
 import MonthlyChart from '@/components/rescue/MonthlyChart'
+import RoleGate from '@/components/navigation/RoleGate'
+import StoreNavigation from '@/components/navigation/StoreNavigation'
+import DemoRoleSwitch from '@/components/navigation/DemoRoleSwitch'
 import { formatYen } from '@/lib/rescue/kpi'
-import { CUMULATIVE_RECOVERY_GMV } from '@/lib/rescue/data'
+import { CUMULATIVE_RECOVERY_GMV, DEMO_SLOT, PERK_DESCRIPTION } from '@/lib/rescue/data'
 
 function getActiveStep(status: string): number {
   switch (status) {
@@ -22,7 +25,7 @@ function getActiveStep(status: string): number {
 
 export default function StoreDashboardPage() {
   const router = useRouter()
-  const { rescueStatus, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo } =
+  const { rescueStatus, rescueOfferType, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo } =
     useRescue()
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -41,8 +44,14 @@ export default function StoreDashboardPage() {
     router.push('/store/cancel')
   }
 
+  function handleReset() {
+    resetDemo()
+    window.location.assign('/')
+  }
+
   return (
-    <div className="min-h-screen bg-stone-50">
+    <RoleGate role="restaurant">
+    <div className="min-h-screen bg-stone-50 pb-24">
       <div className="mx-auto max-w-4xl px-4 py-8">
 
         {/* Header */}
@@ -54,12 +63,10 @@ export default function StoreDashboardPage() {
             <h1 className="mt-0.5 text-2xl font-bold text-stone-900">店舗ダッシュボード</h1>
             <p className="mt-0.5 text-sm text-stone-500">鮨 佐賀</p>
           </div>
-          <button
-            onClick={resetDemo}
-            className="shrink-0 rounded border border-stone-200 px-3 py-1.5 text-xs text-stone-400 transition-colors hover:border-stone-300 hover:text-stone-600"
-          >
-            Reset Demo
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <DemoRoleSwitch to="customer" />
+            <button onClick={handleReset} className="text-xs text-stone-400 hover:text-stone-600">Reset Demo</button>
+          </div>
         </div>
 
         {/* Step Indicator */}
@@ -84,16 +91,19 @@ export default function StoreDashboardPage() {
           </div>
         )}
         {rescueStatus === 'listed' && (
-          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
-            <span className="text-sm font-medium text-orange-600">
-              🔥 RESCUE 出品中 — ユーザーの予約受付中
-            </span>
-            <Link
-              href="/marketplace"
-              className="shrink-0 text-sm font-medium text-orange-600 hover:text-orange-700"
-            >
-              マーケットを見る →
-            </Link>
+          <div className="mb-5 rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-500">🔥 Rescue出品中</p>
+                <h2 className="mt-2 text-xl font-bold text-stone-900">{DEMO_SLOT.restaurantName}</h2>
+                <p className="mt-1 text-sm text-stone-500">{DEMO_SLOT.date} {DEMO_SLOT.time} / {DEMO_SLOT.guests}名</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-orange-600">お客さまへ公開中</span>
+            </div>
+            <div className="mt-4 border-t border-orange-200 pt-4">
+              {rescueOfferType === 'discount' ? <div className="flex items-end gap-3"><div><p className="text-xs text-stone-500">特別価格</p><p className="text-3xl font-black text-orange-500">{formatYen(DEMO_SLOT.rescuePrice)}</p></div><span className="mb-1 rounded-full bg-orange-100 px-2 py-1 text-xs font-bold text-orange-600">20% OFF</span></div> : <div><p className="text-3xl font-black">{formatYen(DEMO_SLOT.originalPrice)}</p><p className="mt-1 text-sm font-bold text-emerald-600">+ {PERK_DESCRIPTION}</p></div>}
+              <Link href="/store/cancel" className="mt-4 inline-block text-sm font-bold text-orange-600">出品内容を見る →</Link>
+            </div>
           </div>
         )}
         {rescueStatus === 'reserved' && (
@@ -128,7 +138,7 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Recovery Rate + Cumulative */}
-        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div id="data" className="mb-4 grid scroll-mt-6 grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
             <RecoveryGauge rate={kpi.recoveryRate} />
           </div>
@@ -205,6 +215,8 @@ export default function StoreDashboardPage() {
         </div>
 
       </div>
+      <StoreNavigation />
     </div>
+    </RoleGate>
   )
 }
