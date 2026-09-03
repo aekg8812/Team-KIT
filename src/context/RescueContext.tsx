@@ -199,21 +199,31 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     setRescueOfferTypeRaw(type);
   }, []);
 
-  const loadCsvSlots = useCallback((csvText: string) => {
-    const { slots, errors } = parseStoreCsv(csvText);
-    if (slots.length === 0) {
-      return {
-        ok: false as const,
-        count: 0 as const,
-        error: errors[0] ?? "有効なデータが見つかりませんでした",
-      };
-    }
-    sessionStorage.setItem(SESSION_KEY_CSV, JSON.stringify(slots));
-    sessionStorage.removeItem(SESSION_KEY_CSV_STATUS);
-    setCsvSlots(slots);
-    setCsvListingStatus({});
-    return { ok: true as const, count: slots.length, slots };
-  }, []);
+  // Merges into the existing pool rather than replacing it — registering more
+  // cancellations (via re-upload or re-using the demo data button) must never
+  // wipe out entries the restaurant has already published or that customers
+  // have already reserved. Rows whose id already exists are skipped as-is.
+  const loadCsvSlots = useCallback(
+    (csvText: string) => {
+      const { slots, errors } = parseStoreCsv(csvText);
+      if (slots.length === 0) {
+        return {
+          ok: false as const,
+          count: 0 as const,
+          error: errors[0] ?? "有効なデータが見つかりませんでした",
+        };
+      }
+      const existingIds = new Set(csvSlots.map((s) => s.id));
+      const addedSlots = slots.filter((s) => !existingIds.has(s.id));
+      if (addedSlots.length > 0) {
+        const next = [...csvSlots, ...addedSlots];
+        sessionStorage.setItem(SESSION_KEY_CSV, JSON.stringify(next));
+        setCsvSlots(next);
+      }
+      return { ok: true as const, count: addedSlots.length, slots: addedSlots };
+    },
+    [csvSlots],
+  );
 
   // Takes an explicit slot list (rather than reading csvSlots state) so a caller that
   // just called loadCsvSlots() in the same handler queues the fresh slots, not a stale
@@ -254,13 +264,18 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     setLastReservedCsvId(id);
   }, []);
 
-  // Restaurant's manual "quick add" form: only name + price are required, everything
-  // else defaults, and pricing is auto-computed — the result still lands as a normal
-  // pending card the restaurant must review and click 出品する on before it's public.
+  // Restaurant's manual cancellation-registration form, mirroring the scripted
+  // /store/cancel flow's own fields (LOSS amount + RESCUE方式選択) so both paths
+  // produce the same shape of listing. The result still lands as a normal pending
+  // card the restaurant must review and click 出品する on before it's public.
   const addManualCancellation = useCallback((input: ManualCancellationInput) => {
     const minutesUntil = input.minutesUntil ?? 60;
-    const { rescuePrice, discountRate } = calcRescuePrice(input.originalPrice, minutesUntil);
+    const offerType = input.offerType ?? "discount";
     const id = `manual-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const { rescuePrice, discountRate } =
+      offerType === "perk"
+        ? { rescuePrice: input.originalPrice, discountRate: 0 }
+        : calcRescuePrice(input.originalPrice, minutesUntil);
     const slot: CsvSlot = {
       id,
       restaurantName: DEMO_SLOT.restaurantName,
@@ -275,8 +290,8 @@ export function RescueProvider({ children }: { children: ReactNode }) {
       rescuePrice,
       discountRate,
       minutesUntil,
-      offerType: "discount",
-      perkDescription: "",
+      offerType,
+      perkDescription: offerType === "perk" ? (input.perkDescription || "特典サービス") : "",
     };
     setCsvSlots((prev) => {
       const next = [...prev, slot];

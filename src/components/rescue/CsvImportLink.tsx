@@ -36,8 +36,12 @@ export default function CsvImportLink() {
       flashMessage(result.error ?? '読み込みに失敗しました')
       return
     }
+    if (result.count === 0) {
+      flashMessage('新しく登録できる内容はありませんでした（登録済みです）')
+      return
+    }
     queueDemoCancellations(result.slots)
-    flashMessage(`${result.count}件のキャンセル待ちに投入しました`)
+    flashMessage(`${result.count}件のキャンセルを登録しました`)
   }
 
   async function handleUseDemoData() {
@@ -54,8 +58,12 @@ export default function CsvImportLink() {
         flashMessage(result.error ?? 'デモデータの読み込みに失敗しました')
         return
       }
+      if (result.count === 0) {
+        flashMessage('デモデータは既に登録済みです')
+        return
+      }
       queueDemoCancellations(result.slots)
-      flashMessage(`${result.count}件のキャンセル待ちを投入しました`)
+      flashMessage(`${result.count}件のキャンセルを登録しました`)
     } catch {
       flashMessage('デモデータの読み込みに失敗しました')
     } finally {

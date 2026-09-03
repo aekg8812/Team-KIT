@@ -10,7 +10,6 @@ import RoleGate from '@/components/navigation/RoleGate'
 import StoreNavigation from '@/components/navigation/StoreNavigation'
 import DemoRoleSwitch from '@/components/navigation/DemoRoleSwitch'
 import { formatYen } from '@/lib/rescue/kpi'
-import { DEMO_SLOT, PERK_DESCRIPTION } from '@/lib/rescue/data'
 
 function getActiveStep(status: string): number {
   switch (status) {
@@ -23,7 +22,7 @@ function getActiveStep(status: string): number {
 
 export default function StoreDashboardPage() {
   const router = useRouter()
-  const { rescueStatus, rescueOfferType, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo, csvSlots, csvListingStatus } =
+  const { rescueStatus, kpi, pendingHighlight, consumeHighlight, startCancel, resetDemo, csvSlots, csvListingStatus } =
     useRescue()
   const pendingCsvCount = csvSlots.filter((s) => csvListingStatus[s.id] === 'pending').length
 
@@ -89,22 +88,6 @@ export default function StoreDashboardPage() {
             </Link>
           </div>
         )}
-        {rescueStatus === 'listed' && (
-          <div className="mb-5 rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-500">🔥 Rescue出品中</p>
-                <h2 className="mt-2 text-xl font-bold text-stone-900">{DEMO_SLOT.restaurantName}</h2>
-                <p className="mt-1 text-sm text-stone-500">{DEMO_SLOT.date} {DEMO_SLOT.time} / {DEMO_SLOT.guests}名</p>
-              </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-orange-600">お客さまへ公開中</span>
-            </div>
-            <div className="mt-4 border-t border-orange-200 pt-4">
-              {rescueOfferType === 'discount' ? <div className="flex items-end gap-3"><div><p className="text-xs text-stone-500">特別価格</p><p className="text-3xl font-black text-orange-500">{formatYen(DEMO_SLOT.rescuePrice)}</p></div><span className="mb-1 rounded-full bg-orange-100 px-2 py-1 text-xs font-bold text-orange-600">20% OFF</span></div> : <div><p className="text-3xl font-black">{formatYen(DEMO_SLOT.originalPrice)}</p><p className="mt-1 text-sm font-bold text-emerald-600">+ {PERK_DESCRIPTION}</p></div>}
-              <Link href="/store/cancel" className="mt-4 inline-block text-sm font-bold text-orange-600">出品内容を見る →</Link>
-            </div>
-          </div>
-        )}
         {rescueStatus === 'reserved' && (
           <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
             <span className="text-sm font-medium text-emerald-700">
@@ -115,7 +98,7 @@ export default function StoreDashboardPage() {
         {pendingCsvCount > 0 && (
           <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
             <span className="text-sm font-medium text-red-600">
-              ⚠ {pendingCsvCount}件のキャンセル待ちがあります
+              ⚠ {pendingCsvCount}件のキャンセルが発生しています
             </span>
             <Link href="/store/list" className="shrink-0 text-sm font-medium text-red-600 hover:text-red-700">
               出品する →

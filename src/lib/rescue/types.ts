@@ -37,9 +37,10 @@ export type CsvSlot = RescueSlot & {
 // multiple CSV-sourced listings can be pending/listed/reserved at the same time.
 export type CsvListingStatus = 'pending' | 'listed' | 'reserved'
 
-// Minimal input for the restaurant's manual "quick add" form — the rest of a
-// CsvSlot is auto-filled with sensible defaults and computed pricing. There is
-// no restaurantName here: this is a single-restaurant platform, so every slot
+// Input for the restaurant's manual cancellation-registration form — mirrors the
+// scripted /store/cancel flow's fields (LOSS amount, RESCUE方式選択) so both ways
+// of registering a cancellation produce the same shape of listing. There is no
+// restaurantName here: this is a single-restaurant platform, so every slot
 // (CSV-imported or manually added) belongs to the one store running the demo.
 export type ManualCancellationInput = {
   originalPrice: number
@@ -47,6 +48,8 @@ export type ManualCancellationInput = {
   time?: string
   guests?: number
   minutesUntil?: number
+  offerType?: RescueOfferType
+  perkDescription?: string
 }
 
 export type KpiBase = {
