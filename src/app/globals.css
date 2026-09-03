@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* ============================================================
+   RESCUE — Animation keyframes
+   ============================================================ */
+
+/* Used on RESCUED title: scale-in + slight overshoot */
+@keyframes rescue-appear {
+  0%   { opacity: 0; transform: scale(0.9); }
+  70%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Used on sequential breakdown rows */
+@keyframes rescue-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Used on KPI cards after reservation completes */
+@keyframes kpi-highlight {
+  0%   { border-color: rgb(52 211 153);      background-color: rgb(52 211 153 / 0.10); }
+  60%  { border-color: rgb(52 211 153 / 0.4); background-color: rgb(52 211 153 / 0.04); }
+  100% { border-color: rgb(39 39 42);         background-color: rgb(24 24 27); }
+}
+
+/* Used on LOSS DETECTED alert: soft pulse on the red border */
+@keyframes loss-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
