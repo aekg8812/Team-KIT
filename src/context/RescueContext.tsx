@@ -29,6 +29,7 @@ const SESSION_KEY_HIGHLIGHT = "rescue_demo_highlight_pending";
 const SESSION_KEY_CSV = "rescue_demo_csv_slots";
 const SESSION_KEY_CSV_STATUS = "rescue_demo_csv_listing_status";
 const SESSION_KEY_CSV_LAST_RESERVED = "rescue_demo_csv_last_reserved";
+const SESSION_KEY_CELEBRATION_PENDING = "rescue_demo_store_celebration_pending";
 const VALID_STATUSES: RescueStatus[] = [
   "idle",
   "cancelled",
@@ -65,6 +66,8 @@ type RescueContextValue = {
   reserveCsvListing: (id: string) => void;
   addManualCancellation: (input: ManualCancellationInput) => void;
   lastReservedCsvId: string | null;
+  pendingRescueCelebration: boolean;
+  consumeRescueCelebration: () => void;
 };
 
 const RescueContext = createContext<RescueContextValue | null>(null);
@@ -82,6 +85,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     Record<string, CsvListingStatus>
   >({});
   const [lastReservedCsvId, setLastReservedCsvId] = useState<string | null>(null);
+  const [pendingRescueCelebration, setPendingRescueCelebration] = useState(false);
 
   useEffect(() => {
     const savedStatus = sessionStorage.getItem(SESSION_KEY);
@@ -90,6 +94,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     const savedCsv = sessionStorage.getItem(SESSION_KEY_CSV);
     const savedCsvStatus = sessionStorage.getItem(SESSION_KEY_CSV_STATUS);
     const savedLastReserved = sessionStorage.getItem(SESSION_KEY_CSV_LAST_RESERVED);
+    const savedCelebrationPending = sessionStorage.getItem(SESSION_KEY_CELEBRATION_PENDING);
     const frame = requestAnimationFrame(() => {
       setRescueStatus(
         savedStatus && VALID_STATUSES.includes(savedStatus as RescueStatus)
@@ -120,6 +125,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
         }
       }
       if (savedLastReserved) setLastReservedCsvId(savedLastReserved);
+      setPendingRescueCelebration(savedCelebrationPending === "true");
       setHydrated(true);
     });
     return () => cancelAnimationFrame(frame);
@@ -150,10 +156,12 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(SESSION_KEY_HIGHLIGHT, "true");
     setPendingHighlight(true);
     // Clear any earlier CSV reservation pointer so this fresh DEMO_SLOT booking is
-    // the one /customer/reservation-complete shows, not a stale one from earlier
-    // in the session (both "reserved" flags persist until Reset Demo).
+    // the one /customer/reservation-complete and /store/rescued show, not a stale
+    // one from earlier in the session (both "reserved" flags persist until Reset Demo).
     sessionStorage.removeItem(SESSION_KEY_CSV_LAST_RESERVED);
     setLastReservedCsvId(null);
+    sessionStorage.setItem(SESSION_KEY_CELEBRATION_PENDING, "true");
+    setPendingRescueCelebration(true);
   }, []);
 
   const resetDemo = useCallback(() => {
@@ -164,6 +172,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(SESSION_KEY_CSV);
     sessionStorage.removeItem(SESSION_KEY_CSV_STATUS);
     sessionStorage.removeItem(SESSION_KEY_CSV_LAST_RESERVED);
+    sessionStorage.removeItem(SESSION_KEY_CELEBRATION_PENDING);
     setPendingHighlight(false);
     setRescueOfferTypeRaw("discount");
     setUserRole(null);
@@ -172,11 +181,17 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     setCsvSlots([]);
     setCsvListingStatus({});
     setLastReservedCsvId(null);
+    setPendingRescueCelebration(false);
   }, []);
 
   const consumeHighlight = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY_HIGHLIGHT);
     setPendingHighlight(false);
+  }, []);
+
+  const consumeRescueCelebration = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY_CELEBRATION_PENDING);
+    setPendingRescueCelebration(false);
   }, []);
 
   const selectRole = useCallback((role: UserRole) => {
@@ -262,6 +277,8 @@ export function RescueProvider({ children }: { children: ReactNode }) {
     });
     sessionStorage.setItem(SESSION_KEY_CSV_LAST_RESERVED, id);
     setLastReservedCsvId(id);
+    sessionStorage.setItem(SESSION_KEY_CELEBRATION_PENDING, "true");
+    setPendingRescueCelebration(true);
   }, []);
 
   // Restaurant's manual cancellation-registration form, mirroring the scripted
@@ -334,6 +351,8 @@ export function RescueProvider({ children }: { children: ReactNode }) {
         reserveCsvListing,
         addManualCancellation,
         lastReservedCsvId,
+        pendingRescueCelebration,
+        consumeRescueCelebration,
       }}
     >
       {children}

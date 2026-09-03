@@ -10,21 +10,46 @@ import { calcRescueBreakdown, formatYen } from '@/lib/rescue/kpi'
 
 export default function RescuedPage() {
   const router = useRouter()
-  const { hydrated, rescueStatus, rescueOfferType } = useRescue()
+  const {
+    hydrated,
+    rescueOfferType,
+    csvSlots,
+    csvListingStatus,
+    lastReservedCsvId,
+    pendingRescueCelebration,
+    consumeRescueCelebration,
+  } = useRescue()
+  const matchedCsvSlot = lastReservedCsvId ? csvSlots.find((s) => s.id === lastReservedCsvId) : undefined
+  // Prefer the CSV reservation when both happen to be true — see the matching
+  // priority logic in /customer/reservation-complete for why this can't just be
+  // "whichever is reserved" (both flags persist for the whole session).
+  const reservedCsvSlot =
+    matchedCsvSlot && csvListingStatus[matchedCsvSlot.id] === 'reserved' ? matchedCsvSlot : undefined
+  const slot = reservedCsvSlot ?? DEMO_SLOT
+  const offerType = reservedCsvSlot ? reservedCsvSlot.offerType : rescueOfferType
+
   const [displayAmount, setDisplayAmount] = useState(0)
   const rafRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
+  // Consuming the celebration flag re-renders this page (pendingRescueCelebration
+  // flips to false) — this ref stops that from re-triggering the redirect below.
+  // (A ref, not state, since flipping it must not itself schedule another render.)
+  const shownRef = useRef(false)
 
   useEffect(() => {
-    if (hydrated && rescueStatus !== 'reserved') {
+    if (!hydrated || shownRef.current) return
+    if (!pendingRescueCelebration) {
       router.replace('/store')
+      return
     }
-  }, [hydrated, rescueStatus, router])
+    shownRef.current = true
+    consumeRescueCelebration()
+  }, [consumeRescueCelebration, hydrated, pendingRescueCelebration, router])
 
   // Count-up: starts 1s after mount, runs for 1s with easeOutCubic.
   // setDisplayAmount is called inside rAF callback — not synchronously in effect body.
   useEffect(() => {
-    const storeRevenue = calcRescueBreakdown(rescueOfferType, DEMO_SLOT).storeRevenue
+    const storeRevenue = calcRescueBreakdown(offerType, slot).storeRevenue
     const DURATION = 1000
 
     const delay = setTimeout(() => {
@@ -46,9 +71,9 @@ export default function RescuedPage() {
       clearTimeout(delay)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [rescueOfferType])
+  }, [offerType, slot])
 
-  const bd = calcRescueBreakdown(rescueOfferType, DEMO_SLOT)
+  const bd = calcRescueBreakdown(offerType, slot)
 
   return (
     <RoleGate role="restaurant">

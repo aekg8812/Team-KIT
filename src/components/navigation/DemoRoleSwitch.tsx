@@ -6,7 +6,7 @@ import type { UserRole } from '@/lib/rescue/types'
 
 export default function DemoRoleSwitch({ to }: { to: UserRole }) {
   const router = useRouter()
-  const { rescueStatus, beginRoleSwitch } = useRescue()
+  const { pendingRescueCelebration, beginRoleSwitch } = useRescue()
 
   function handleSwitch() {
     beginRoleSwitch(to)
@@ -14,7 +14,9 @@ export default function DemoRoleSwitch({ to }: { to: UserRole }) {
       router.push('/customer/rescues')
       return
     }
-    router.push(rescueStatus === 'reserved' ? '/store/rescued' : '/store')
+    // One-shot: shows the celebration once, right after a fresh reservation — not
+    // on every subsequent switch, since "reserved" status itself persists all session.
+    router.push(pendingRescueCelebration ? '/store/rescued' : '/store')
   }
 
   return (
