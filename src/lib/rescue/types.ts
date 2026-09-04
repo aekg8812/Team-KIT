@@ -44,12 +44,13 @@ export type CsvListingStatus = 'pending' | 'listed' | 'reserved'
 // (CSV-imported or manually added) belongs to the one store running the demo.
 export type ManualCancellationInput = {
   originalPrice: number
+  minutesUntil: number
   category?: string
   time?: string
   guests?: number
-  minutesUntil?: number
   offerType?: RescueOfferType
   perkDescription?: string
+  comment?: string
 }
 
 export type KpiBase = {

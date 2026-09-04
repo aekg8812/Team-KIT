@@ -286,7 +286,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
   // produce the same shape of listing. The result still lands as a normal pending
   // card the restaurant must review and click 出品する on before it's public.
   const addManualCancellation = useCallback((input: ManualCancellationInput) => {
-    const minutesUntil = input.minutesUntil ?? 60;
+    const minutesUntil = input.minutesUntil;
     const offerType = input.offerType ?? "discount";
     const id = `manual-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const { rescuePrice, discountRate } =
@@ -298,7 +298,7 @@ export function RescueProvider({ children }: { children: ReactNode }) {
       restaurantName: DEMO_SLOT.restaurantName,
       category: input.category || "おまかせコース",
       description: "",
-      comment: "",
+      comment: input.comment?.trim() || "",
       location: "",
       date: "本日",
       time: input.time || "19:00",

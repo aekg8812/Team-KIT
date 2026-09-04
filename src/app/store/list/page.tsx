@@ -19,6 +19,7 @@ export default function StoreListPage() {
   const [minutesUntil, setMinutesUntil] = useState('')
   const [offerType, setOfferType] = useState<RescueOfferType>('discount')
   const [perkText, setPerkText] = useState('')
+  const [comment, setComment] = useState('')
 
   const pending = csvSlots.filter((s) => csvListingStatus[s.id] === 'pending')
   const listed = csvSlots.filter((s) => csvListingStatus[s.id] === 'listed')
@@ -27,21 +28,23 @@ export default function StoreListPage() {
 
   const originalPrice = Number(price)
   const validPrice = Number.isFinite(originalPrice) && originalPrice > 0
-  const preview = validPrice
-    ? calcRescuePrice(originalPrice, minutesUntil ? Number(minutesUntil) || 60 : 60)
-    : null
+  const minutesNum = Number(minutesUntil)
+  const validMinutes = minutesUntil.trim() !== '' && Number.isFinite(minutesNum) && minutesNum > 0
+  const canSubmit = validPrice && validMinutes
+  const preview = canSubmit ? calcRescuePrice(originalPrice, minutesNum) : null
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!validPrice) return
+    if (!canSubmit) return
     addManualCancellation({
       originalPrice,
+      minutesUntil: minutesNum,
       category: course.trim() || undefined,
       time: time.trim() || undefined,
       guests: guests ? Number(guests) : undefined,
-      minutesUntil: minutesUntil ? Number(minutesUntil) : undefined,
       offerType,
       perkDescription: offerType === 'perk' ? perkText.trim() || undefined : undefined,
+      comment: comment.trim() || undefined,
     })
     setCourse('')
     setPrice('')
@@ -50,6 +53,7 @@ export default function StoreListPage() {
     setMinutesUntil('')
     setOfferType('discount')
     setPerkText('')
+    setComment('')
   }
 
   return (
@@ -75,9 +79,9 @@ export default function StoreListPage() {
               <input value={time} onChange={(e) => setTime(e.target.value)} placeholder="時間 (例 19:00)" className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
               <input value={guests} onChange={(e) => setGuests(e.target.value)} type="number" min={1} placeholder="人数" className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
             </div>
-            <input value={minutesUntil} onChange={(e) => setMinutesUntil(e.target.value)} type="number" min={1} placeholder="予約までの残り分数 (任意、例 60)" className="mt-3 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+            <input value={minutesUntil} onChange={(e) => setMinutesUntil(e.target.value)} type="number" min={1} placeholder="予約までの残り分数 (必須、例 60)" required className="mt-3 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm" />
 
-            {validPrice && preview && (
+            {canSubmit && preview && (
               <>
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-red-500">予想損失</p>
@@ -102,10 +106,11 @@ export default function StoreListPage() {
                 {offerType === 'perk' && (
                   <input value={perkText} onChange={(e) => setPerkText(e.target.value)} placeholder="特典内容 (例: ドリンク1杯サービス)" className="mt-3 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm" />
                 )}
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="店舗からひとこと (任意)" rows={2} className="mt-3 w-full resize-none rounded-lg border border-stone-300 px-3 py-2 text-sm" />
               </>
             )}
 
-            <button type="submit" disabled={!validPrice} className="mt-4 w-full rounded-xl bg-stone-800 py-3 text-sm font-bold text-white hover:bg-stone-700 disabled:opacity-50">この内容で登録する</button>
+            <button type="submit" disabled={!canSubmit} className="mt-4 w-full rounded-xl bg-stone-800 py-3 text-sm font-bold text-white hover:bg-stone-700 disabled:opacity-50">この内容で登録する</button>
           </form>
 
           {isEmpty && (
