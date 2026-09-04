@@ -56,7 +56,7 @@ export default function StoreDashboardPage() {
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold tracking-[0.25em] text-orange-500 uppercase">
-              Fill Food — 飲食店向け
+              救席 — 飲食店向け
             </p>
             <h1 className="mt-0.5 text-2xl font-bold text-stone-900">店舗ダッシュボード</h1>
             <p className="mt-0.5 text-sm text-stone-500">鮨 佐賀</p>

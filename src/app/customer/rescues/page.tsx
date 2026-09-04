@@ -19,7 +19,7 @@ export default function RescueListPage() {
   const listedSlots = hasCsvSlots ? publishedCsvSlots : DUMMY_SLOTS
 
   return <RoleGate role="customer"><main className="min-h-screen bg-stone-50 pb-24">
-    <header className="border-b border-stone-200 bg-white px-4 py-5"><div className="mx-auto flex max-w-2xl items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-600">Fill Food — お客さま向け</p><h1 className="mt-1 text-2xl font-bold">RESCUE枠</h1><p className="mt-1 text-sm text-stone-500">空いた人気店を、今だけの条件で予約</p></div><DemoRoleSwitch to="restaurant" /></div></header>
+    <header className="border-b border-stone-200 bg-white px-4 py-5"><div className="mx-auto flex max-w-2xl items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-600">救席 — お客さま向け</p><h1 className="mt-1 text-2xl font-bold">RESCUE枠</h1><p className="mt-1 text-sm text-stone-500">空いた人気店を、今だけの条件で予約</p></div><DemoRoleSwitch to="restaurant" /></div></header>
     <div className="mx-auto max-w-2xl px-4 py-6">
       {showDemoSlot && <article className={`mb-6 overflow-hidden rounded-2xl border-2 bg-white shadow-sm ${reserved ? 'border-emerald-300' : 'border-orange-300'}`}>
         <div className={`flex items-center px-5 py-2 ${reserved ? 'bg-emerald-500' : 'bg-orange-500'}`}><span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">{reserved ? '✓ 予約済み' : 'たった今キャンセル'}</span><span className="ml-auto text-xs font-bold text-white/80">{reserved ? '予約が確定しました' : '残り1枠'}</span></div>

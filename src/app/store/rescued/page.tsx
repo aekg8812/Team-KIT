@@ -144,7 +144,7 @@ export default function RescuedPage() {
               className="flex items-center justify-between border-b border-stone-100 py-3 opacity-0 animate-[rescue-fade-up_0.35s_ease-out_forwards]"
               style={{ animationDelay: '2.15s' }}
             >
-              <span className="text-sm text-stone-500">Fill Food 手数料 (10%)</span>
+              <span className="text-sm text-stone-500">救席 手数料 (10%)</span>
               <span className="text-lg font-bold tabular-nums text-stone-400">
                 -{formatYen(bd.serviceFee)}
               </span>
@@ -167,7 +167,7 @@ export default function RescuedPage() {
             style={{ animationDelay: '2.75s' }}
           >
             <p className="text-xs text-stone-400">
-              Fill Food にも{' '}
+              救席 にも{' '}
               <span className="font-bold text-orange-500">+{formatYen(bd.serviceFee)}</span>
               {' '}の成功報酬が発生しました
             </p>

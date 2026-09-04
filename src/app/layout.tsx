@@ -7,7 +7,7 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FILL FOOD — キャンセル損失回収サービス',
+  title: '救席 — キャンセル損失回収サービス',
   description: '飲食店のキャンセル損失を売上に変える。',
 }
 

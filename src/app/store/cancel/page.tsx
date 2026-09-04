@@ -32,7 +32,7 @@ export default function CancelPage() {
       <RoleGate role="restaurant">
         <main className="min-h-screen bg-stone-50 px-4 py-8 pb-24">
           <div className="mx-auto max-w-2xl">
-            <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">Fill Food — 飲食店向け</p><h1 className="mt-1 text-2xl font-bold">出品管理</h1></div><DemoRoleSwitch to="customer" /></div>
+            <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">救席 — 飲食店向け</p><h1 className="mt-1 text-2xl font-bold">出品管理</h1></div><DemoRoleSwitch to="customer" /></div>
             <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-8 text-center"><p className="text-4xl">{rescueStatus === 'idle' ? '📭' : rescueStatus === 'listed' ? '🔥' : '✓'}</p><p className="mt-4 font-bold text-stone-800">{message}</p><button onClick={() => router.push('/store')} className="mt-6 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white">ダッシュボードへ</button></div>
           </div>
           <StoreNavigation />
@@ -45,7 +45,7 @@ export default function CancelPage() {
     <RoleGate role="restaurant">
       <main className="min-h-screen bg-stone-50 px-4 py-8 pb-24">
         <div className="mx-auto max-w-2xl">
-          <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">Fill Food — 飲食店向け</p><h1 className="mt-1 text-2xl font-bold">RESCUE投稿設定</h1></div><DemoRoleSwitch to="customer" /></div>
+          <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">救席 — 飲食店向け</p><h1 className="mt-1 text-2xl font-bold">RESCUE投稿設定</h1></div><DemoRoleSwitch to="customer" /></div>
           <div className="mt-6 rounded-xl border border-stone-200 bg-white px-4 py-3"><StepIndicator activeStep={0} /></div>
 
           <div className="mt-5 rounded-xl border border-stone-200 bg-white p-5"><p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">キャンセルされた予約</p><h2 className="mt-2 text-xl font-bold">{slot.restaurantName}</h2><p className="mt-1 text-sm text-stone-500">{slot.date} {slot.time} / {slot.guests}名 / 通常 {formatYen(slot.originalPrice)}</p></div>

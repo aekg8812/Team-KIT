@@ -19,7 +19,7 @@ export default function RoleSelectPage() {
       <div className="mx-auto max-w-2xl">
         <Link href="/" className="text-sm text-stone-500">← 戻る</Link>
         <div className="mt-10 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-orange-500">Fill Food</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-orange-500">救席</p>
           <h1 className="mt-3 text-3xl font-black text-stone-900">どちらで利用しますか？</h1>
           <p className="mt-2 text-sm text-stone-500">デモではゲストとしてすぐに始められます</p>
         </div>

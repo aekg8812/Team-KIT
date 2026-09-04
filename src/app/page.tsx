@@ -4,12 +4,12 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-stone-50">
       <header className="border-b border-stone-200 bg-white px-4 py-4">
-        <div className="mx-auto max-w-4xl text-lg font-black tracking-tight">Fill Food</div>
+        <div className="mx-auto max-w-4xl text-lg font-black tracking-tight">救席</div>
       </header>
 
       <section className="bg-orange-50 px-4 py-16 text-center sm:py-20">
         <div className="mx-auto max-w-2xl">
-          <p className="mb-5 text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">Fill Food</p>
+          <p className="mb-5 text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">救席</p>
           <h1 className="text-4xl font-black leading-tight tracking-tight text-stone-900 sm:text-5xl">
             キャンセルで消える売上を、<br />もう一度、予約に変える。
           </h1>

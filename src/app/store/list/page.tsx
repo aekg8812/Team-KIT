@@ -58,7 +58,7 @@ export default function StoreListPage() {
         <div className="mx-auto max-w-2xl">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">Fill Food — 飲食店向け</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-500">救席 — 飲食店向け</p>
               <h1 className="mt-1 text-2xl font-bold">出品する</h1>
               <p className="mt-0.5 text-sm text-stone-500">鮨 佐賀</p>
               <p className="mt-1 text-sm text-stone-500">発生したキャンセルをRESCUE枠として公開します</p>
